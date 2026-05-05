@@ -1,0 +1,313 @@
+/* ===== OKAN SÜRÜCÜ KURSLARI - ANA STİL ===== */
+:root {
+  --red:       #c41e3a;
+  --red-dark:  #8b0000;
+  --red-light: #fdf0f2;
+  --red-mid:   #e8889a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f4f5f7;
+  margin: 0;
+}
+
+/* ── NAVBAR ──────────────────────────────── */
+.okan-nav {
+  background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.okan-nav .brand {
+  color: white;
+  font-size: 17px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.okan-nav .nav-right { display: flex; align-items: center; gap: 14px; }
+
+.okan-nav .user-badge {
+  color: rgba(255,255,255,0.9);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-logout {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.25); color: white; }
+
+/* ── SIDEBAR ─────────────────────────────── */
+.app-layout { display: flex; min-height: calc(100vh - 60px); }
+
+.sidebar {
+  width: 230px;
+  background: white;
+  border-right: 1px solid #e8e8e8;
+  padding: 20px 0;
+  flex-shrink: 0;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+}
+
+.sidebar .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.sidebar .nav-item:hover,
+.sidebar .nav-item.active {
+  background: var(--red-light);
+  color: var(--red);
+  border-left-color: var(--red);
+}
+
+.sidebar .nav-item i { width: 18px; text-align: center; font-size: 15px; }
+
+.sidebar .nav-section {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #aaa;
+  padding: 16px 20px 6px;
+}
+
+/* ── MAIN CONTENT ────────────────────────── */
+.main-content { flex: 1; padding: 28px; overflow-y: auto; }
+
+/* ── STAT CARDS ──────────────────────────── */
+.stat-card {
+  background: white;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  border-left: 4px solid var(--red);
+}
+
+.stat-card .stat-label { font-size: 13px; color: #888; font-weight: 500; margin-bottom: 6px; }
+.stat-card .stat-value { font-size: 30px; font-weight: 700; color: var(--red); line-height: 1; }
+.stat-card .stat-icon  { font-size: 28px; color: var(--red-mid); }
+
+/* ── BUTTONS ─────────────────────────────── */
+.btn-red {
+  background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+  color: white !important;
+  border: none;
+  border-radius: 9px;
+  padding: 9px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+}
+.btn-red:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(196,30,58,0.4); }
+.btn-red:active { transform: translateY(0); }
+
+.btn-outline-red {
+  background: transparent;
+  color: var(--red);
+  border: 2px solid var(--red);
+  border-radius: 9px;
+  padding: 7px 18px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.btn-outline-red:hover { background: var(--red); color: white; }
+
+/* ── TABLE ───────────────────────────────── */
+.okan-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+.okan-table thead th { background: var(--red); color: white; padding: 12px 16px; font-size: 13px; font-weight: 600; text-align: left; white-space: nowrap; }
+.okan-table tbody td { padding: 12px 16px; font-size: 14px; color: #333; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+.okan-table tbody tr:last-child td { border-bottom: none; }
+.okan-table tbody tr:hover { background: var(--red-light); }
+
+/* ── CARD ────────────────────────────────── */
+.okan-card {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+.okan-card .card-head {
+  background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+  color: white;
+  padding: 16px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.okan-card .card-body { padding: 20px; }
+
+/* ── BADGES ──────────────────────────────── */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.badge-green  { background: #d4edda; color: #155724; }
+.badge-red    { background: #f8d7da; color: #721c24; }
+.badge-orange { background: #fff3cd; color: #856404; }
+.badge-gray   { background: #e2e3e5; color: #383d41; }
+.badge-blue   { background: #cce5ff; color: #004085; }
+
+/* PRİM badges */
+.prim-5000 { background: #d4edda; color: #155724; }
+.prim-4000 { background: #cce5ff; color: #004085; }
+.prim-3000 { background: #fff3cd; color: #856404; }
+.prim-1000 { background: #f8d7da; color: #721c24; }
+.prim-0    { background: #e2e3e5; color: #383d41; }
+
+/* ── FORM ────────────────────────────────── */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 9px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.form-control:focus { border-color: var(--red); }
+select.form-control { cursor: pointer; }
+
+/* ── MODAL ───────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+  animation: modalIn 0.25s ease-out;
+}
+
+@keyframes modalIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.modal-header {
+  background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+  color: white;
+  padding: 18px 22px;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-close { background: none; border: none; color: white; font-size: 20px; cursor: pointer; line-height: 1; }
+.modal-body  { padding: 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 10px; }
+
+/* ── ALERTS ──────────────────────────────── */
+.alert { padding: 12px 16px; border-radius: 9px; font-size: 14px; margin-bottom: 16px; }
+.alert-error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-info    { background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
+
+/* ── SECTION HEADER ──────────────────────── */
+.section-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.section-hd h4 { margin: 0; font-size: 18px; font-weight: 700; color: #222; }
+
+/* ── PRİM PROGRESS ───────────────────────── */
+.prim-progress-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: #e0e0e0;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.prim-progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--red) 0%, var(--red-dark) 100%);
+  transition: width 0.5s;
+}
+
+/* ── AVATAR ──────────────────────────────── */
+.avatar-circle {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* ── RESPONSIVE ──────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main-content { padding: 16px; }
+}
