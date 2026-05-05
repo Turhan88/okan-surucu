@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Öğretmen Paneli - Okan Sürücü Kursları</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/okan.css">
+  <style>
+    .page { display:none } .page.active { display:block }
+    .sidebar .nav-item.active { background:#fff0f2; color:#c41e3a; border-left-color:#c41e3a }
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px }
+    @media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+    .prim-banner { background:linear-gradient(135deg,#c41e3a,#8b0000); border-radius:14px; padding:22px; color:white; display:flex; align-items:center; justify-content:space-between; margin-bottom:22px }
+    .prim-banner .amount { font-size:34px; font-weight:800 }
+    .prim-banner .lbl    { font-size:13px; opacity:.88; margin-top:3px }
+    .prim-banner .rate   { font-size:46px; font-weight:800; opacity:.2 }
+  </style>
+</head>
+<body>
+<nav class="okan-nav">
+  <a href="#" class="brand"><i class="fas fa-steering-wheel"></i> OKAN SÜRÜCÜ KURSLARI</a>
+  <div class="nav-right">
+    <div class="user-badge"><i class="fas fa-chalkboard-teacher"></i> <span id="navName">Öğretmen</span></div>
+    <a href="#" class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Çıkış</a>
+  </div>
+</nav>
+
+<div class="app-layout">
+  <div class="sidebar">
+    <div class="nav-section">MENÜ</div>
+    <div class="nav-item active" onclick="sp('dashboard',this)"><i class="fas fa-tachometer-alt"></i> Genel Bakış</div>
+    <div class="nav-item" onclick="sp('kursiyerler',this)"><i class="fas fa-users"></i> Kursiyerlerim</div>
+    <div class="nav-item" onclick="sp('ekle',this)"><i class="fas fa-user-plus"></i> Kursiyer Ekle</div>
+    <div class="nav-item" onclick="sp('sinav',this)"><i class="fas fa-graduation-cap"></i> Sınav Sonucu Gir</div>
+    <div class="nav-item" onclick="sp('anketler',this)"><i class="fas fa-star"></i> Anket Sonuçlarım</div>
+    <div class="nav-item" onclick="sp('prim',this)"><i class="fas fa-trophy"></i> Prim Durumum</div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="section-hd"><h4><i class="fas fa-tachometer-alt me-2" style="color:#c41e3a"></i>Genel Bakış</h4></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Kursiyerim</div><div class="stat-value" id="d-stu">-</div></div>
+        <div class="stat-card"><div class="stat-label">Anket Sayısı</div><div class="stat-value" id="d-srv">-</div></div>
+        <div class="stat-card"><div class="stat-label">Ort. Puan</div><div class="stat-value" id="d-avg">-</div></div>
+        <div class="stat-card"><div class="stat-label">Bu Ay Prim</div><div class="stat-value" id="d-prim">-</div></div>
+      </div>
+      <div id="primBanner"></div>
+      <div class="okan-card">
+        <div class="card-head"><span><i class="fas fa-users me-2"></i>Kursiyerlerim (Son 5)</span></div>
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="dash-table">
+            <thead><tr><th>Ad Soyad</th><th>TC No</th><th>Anket</th><th>Son Sınav</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- KURSİYERLERİM -->
+    <div id="page-kursiyerler" class="page">
+      <div class="section-hd"><h4><i class="fas fa-users me-2" style="color:#c41e3a"></i>Kursiyerlerim</h4></div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="stu-table">
+            <thead><tr><th>Ad Soyad</th><th>TC No</th><th>Telefon</th><th>Anket</th><th>Son Sınav</th><th>İşlem</th></tr></thead>
+            <tbody><tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- KURSİYER EKLE -->
+    <div id="page-ekle" class="page">
+      <div class="section-hd"><h4><i class="fas fa-user-plus me-2" style="color:#c41e3a"></i>Kursiyer Ekle</h4></div>
+      <div class="okan-card" style="max-width:500px">
+        <div class="card-body">
+          <div id="addStuAlert"></div>
+          <div class="form-group"><label>Ad *</label><input type="text" class="form-control" id="sFn" placeholder="Adı"></div>
+          <div class="form-group"><label>Soyad *</label><input type="text" class="form-control" id="sLn" placeholder="Soyadı"></div>
+          <div class="form-group"><label>TC Kimlik No *</label><input type="tel" class="form-control" id="sTc" maxlength="11" placeholder="11 haneli TC no"></div>
+          <div class="form-group"><label>Telefon</label><input type="tel" class="form-control" id="sPh" placeholder="05XX XXX XX XX"></div>
+          <div class="form-group"><label>Not</label><textarea class="form-control" id="sNt" rows="2" placeholder="İsteğe bağlı not"></textarea></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-red" onclick="addStudent()"><i class="fas fa-plus me-1"></i>Kaydet</button>
+            <button class="btn-outline-red" onclick="clearAddForm()">Temizle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SINAV SONUCU -->
+    <div id="page-sinav" class="page">
+      <div class="section-hd"><h4><i class="fas fa-graduation-cap me-2" style="color:#c41e3a"></i>Sınav Sonucu Gir</h4></div>
+      <div class="okan-card" style="max-width:500px">
+        <div class="card-body">
+          <div id="examAlert"></div>
+          <div class="form-group"><label>Kursiyer *</label>
+            <select class="form-control" id="examStu"><option value="">-- Kursiyer seçiniz --</option></select>
+          </div>
+          <div class="form-group"><label>Sınav Tarihi *</label><input type="date" class="form-control" id="examDate"></div>
+          <div class="form-group"><label>Sınav Türü</label>
+            <select class="form-control" id="examType">
+              <option value="direksiyon">Direksiyon</option>
+              <option value="park">Park</option>
+              <option value="uygulamali">Uygulamalı</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Puan (İsteğe Bağlı)</label><input type="number" class="form-control" id="examScore" min="0" max="100" placeholder="0-100"></div>
+          <div class="form-group"><label>Sonuç *</label>
+            <select class="form-control" id="examResult">
+              <option value="">-- Sonuç seçiniz --</option>
+              <option value="passed">✅ Geçti</option>
+              <option value="failed">❌ Kaldı</option>
+              <option value="sick">🏥 Raporlu</option>
+              <option value="not-taken">⏸ Sınava Girmedi</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Not</label><input type="text" class="form-control" id="examNote" placeholder="İsteğe bağlı not"></div>
+          <button class="btn-red" onclick="addExam()"><i class="fas fa-save me-1"></i>Kaydet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANKET SONUÇLARI -->
+    <div id="page-anketler" class="page">
+      <div class="section-hd"><h4><i class="fas fa-star me-2" style="color:#c41e3a"></i>Anket Sonuçlarım</h4></div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="srv-table">
+            <thead><tr><th>Tarih</th><th>Kursiyer</th><th>Ort. Puan</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th></tr></thead>
+            <tbody><tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRİM -->
+    <div id="page-prim" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-trophy me-2" style="color:#c41e3a"></i>Prim Durumum</h4>
+        <select class="form-control" id="primMonth" onchange="loadPrim()" style="width:200px;padding:8px 12px"></select>
+      </div>
+      <div id="primDetail" style="background:white;border-radius:14px;padding:24px;box-shadow:0 2px 10px rgba(0,0,0,.07)">
+        <div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Hesaplanıyor...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- KURSİYER DETAY MODALİ -->
+<div class="modal-overlay" id="modalStu" onclick="if(event.target===this)closeModal('modalStu')">
+  <div class="modal-box" style="max-width:600px">
+    <div class="modal-header"><span id="mStuTitle">Kursiyer</span><button class="modal-close" onclick="closeModal('modalStu')">✕</button></div>
+    <div class="modal-body" id="mStuBody"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/.netlify/functions/config"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/api.js"></script>
+<script>
+  initSupabase();
+  let myTeacherId = null;
+  let myStudents  = [];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const profile = await API.getMyProfile();
+    if (!profile || profile.role !== 'teacher') { location.href='index.html'; return; }
+    myTeacherId = profile.teacher_id;
+
+    const teacher = await API.getTeacher(myTeacherId);
+    document.getElementById('navName').textContent = teacher.first_name + ' ' + teacher.last_name;
+
+    populateMonths('primMonth');
+    await loadDashboard();
+  });
+
+  async function doLogout() { await API.logout(); location.href = 'index.html'; }
+
+  function sp(name, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-'+name).classList.add('active');
+    document.querySelectorAll('.sidebar .nav-item').forEach(n => n.classList.remove('active'));
+    if (el) el.classList.add('active');
+    if (name === 'kursiyerler') loadStudents();
+    if (name === 'sinav')       loadStuSelect();
+    if (name === 'anketler')    loadSurveys();
+    if (name === 'prim')        loadPrim();
+  }
+
+  function openModal(id)  { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  function populateMonths(selId) {
+    const sel = document.getElementById(selId);
+    const now = new Date();
+    for (let i=0; i<12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      const v = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      const l = d.toLocaleDateString('tr-TR',{year:'numeric',month:'long'});
+      sel.innerHTML += `<option value="${v}">${l}</option>`;
+    }
+  }
+
+  async function loadDashboard() {
+    try {
+      const [students, surveys, bonus] = await Promise.all([
+        API.getStudents({ teacherId: myTeacherId }),
+        API.getSurveys({ teacherId: myTeacherId }),
+        API.calculateBonus(myTeacherId, currentMonth())
+      ]);
+      myStudents = students;
+      const avg = surveys.length ? (surveys.reduce((s,x)=>s+(x.avg_score||0),0)/surveys.length).toFixed(2) : '-';
+      document.getElementById('d-stu').textContent  = students.length;
+      document.getElementById('d-srv').textContent  = surveys.length;
+      document.getElementById('d-avg').textContent  = avg !== '-' ? avg+'/5' : '-';
+      document.getElementById('d-prim').textContent = bonus?.bonus_amount ? bonus.bonus_amount.toLocaleString('tr-TR')+' ₺' : '0 ₺';
+
+      if (bonus?.bonus_amount > 0) {
+        document.getElementById('primBanner').innerHTML = `
+          <div class="prim-banner">
+            <div><div class="amount">${Number(bonus.bonus_amount).toLocaleString('tr-TR')} ₺</div>
+              <div class="lbl">${bonus.threshold_label||''} — Ort: ${bonus.avg_score||'-'}/5 (${bonus.survey_count} anket)</div></div>
+            <div class="rate">${bonus.threshold_label||''}</div>
+          </div>`;
+      }
+
+      const tbody = document.querySelector('#dash-table tbody');
+      tbody.innerHTML = students.slice(0,5).map(s => {
+        const hasSrv = surveys.some(sv => sv.student_id === s.id);
+        return `<tr>
+          <td><strong>${s.first_name} ${s.last_name}</strong></td>
+          <td>${maskTc(s.tc_no)}</td>
+          <td>${hasSrv?'<span class="badge badge-green">Doldurdu</span>':'<span class="badge badge-gray">Bekliyor</span>'}</td>
+          <td>-</td></tr>`;
+      }).join('') || '<tr><td colspan="4" class="text-center text-muted py-4">Kursiyer yok.</td></tr>';
+    } catch(e) { console.error(e); }
+  }
+
+  async function loadStudents() {
+    const tbody = document.querySelector('#stu-table tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const students = await API.getStudents({ teacherId: myTeacherId });
+      myStudents = students;
+      await loadStuSelect();
+      if (!students.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Henüz kursiyer eklenmemiş.</td></tr>'; return;
+      }
+      tbody.innerHTML = students.map(s => `<tr>
+        <td><strong>${s.first_name} ${s.last_name}</strong></td>
+        <td>${maskTc(s.tc_no)}</td>
+        <td>${s.phone||'-'}</td>
+        <td>-</td><td>-</td>
+        <td><button class="btn-outline-red" style="padding:5px 10px;font-size:12px" onclick="viewStudent('${s.id}')"><i class="fas fa-eye"></i></button></td>
+      </tr>`).join('');
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  async function loadStuSelect() {
+    const sel = document.getElementById('examStu');
+    if (!sel) return;
+    const students = myStudents.length ? myStudents : await API.getStudents({ teacherId: myTeacherId });
+    sel.innerHTML = '<option value="">-- Kursiyer seçiniz --</option>' +
+      students.map(s => `<option value="${s.id}">${s.first_name} ${s.last_name} (${maskTc(s.tc_no)})</option>`).join('');
+  }
+
+  async function addStudent() {
+    const fn = document.getElementById('sFn').value.trim();
+    const ln = document.getElementById('sLn').value.trim();
+    const tc = document.getElementById('sTc').value.trim();
+    const ph = document.getElementById('sPh').value.trim();
+    const nt = document.getElementById('sNt').value.trim();
+    if (!fn || !ln || !tc) return showAlert('addStuAlert','Ad, soyad ve TC zorunludur.','error');
+    if (tc.length !== 11 || !/^\d+$/.test(tc)) return showAlert('addStuAlert','TC kimlik no 11 haneli rakam olmalıdır.','error');
+    try {
+      await API.createStudent({ teacher_id: myTeacherId, first_name:fn, last_name:ln, tc_no:tc, phone:ph||null, notes:nt||null });
+      showAlert('addStuAlert','Kursiyer başarıyla eklendi!','success');
+      clearAddForm(); myStudents = [];
+    } catch(e) { showAlert('addStuAlert', e.message,'error'); }
+  }
+
+  function clearAddForm() {
+    ['sFn','sLn','sTc','sPh','sNt'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('addStuAlert').innerHTML='';
+  }
+
+  async function addExam() {
+    const stuId  = document.getElementById('examStu').value;
+    const date   = document.getElementById('examDate').value;
+    const type   = document.getElementById('examType').value;
+    const score  = document.getElementById('examScore').value;
+    const result = document.getElementById('examResult').value;
+    const note   = document.getElementById('examNote').value.trim();
+    if (!stuId || !date || !result) return showAlert('examAlert','Kursiyer, tarih ve sonuç zorunludur.','error');
+    try {
+      await API.addExam({ student_id:stuId, teacher_id:myTeacherId, exam_date:date, exam_type:type, score:score?+score:null, result, notes:note||null });
+      showAlert('examAlert','Sınav sonucu kaydedildi!','success');
+      document.getElementById('examResult').value='';
+      document.getElementById('examScore').value='';
+      document.getElementById('examNote').value='';
+    } catch(e) { showAlert('examAlert', e.message,'error'); }
+  }
+
+  async function loadSurveys() {
+    const tbody = document.querySelector('#srv-table tbody');
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const surveys = await API.getSurveys({ teacherId: myTeacherId });
+      if (!surveys.length) { tbody.innerHTML='<tr><td colspan="8" class="text-center text-muted py-4">Henüz anket yok.</td></tr>'; return; }
+      tbody.innerHTML = surveys.map(s => {
+        const answers = {};
+        return `<tr>
+          <td>${fmtDate(s.submitted_at)}</td>
+          <td>${s.students?maskTc(s.students.tc_no):'-'}</td>
+          <td><strong>${s.avg_score||'-'}</strong>/5</td>
+          <td colspan="5"><em style="color:#888;font-size:12px">Detay için tıklayın</em></td></tr>`;
+      }).join('');
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  async function loadPrim() {
+    const month = document.getElementById('primMonth').value;
+    const box   = document.getElementById('primDetail');
+    box.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i></div>';
+    try {
+      const bonus = await API.calculateBonus(myTeacherId, month);
+      if (!bonus || bonus.survey_count === 0) {
+        box.innerHTML = '<p class="text-muted text-center py-4">Bu ay için anket bulunmuyor.</p>'; return;
+      }
+      const thresholds = await API.getThresholds();
+      box.innerHTML = `
+        <div style="text-align:center;margin-bottom:24px">
+          <div style="font-size:48px;font-weight:800;color:#c41e3a">${Number(bonus.bonus_amount).toLocaleString('tr-TR')} ₺</div>
+          <div style="font-size:16px;color:#555;margin-top:4px">${bonus.threshold_label||'Prim Yok'} — ${bonus.survey_count} anket — Ort: ${bonus.avg_score||'-'}/5</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
+          ${thresholds.map(t=>`<div style="padding:8px 18px;border-radius:10px;background:${bonus.avg_score>=t.min_score&&bonus.avg_score<=t.max_score?'#c41e3a':'#f4f5f7'};color:${bonus.avg_score>=t.min_score&&bonus.avg_score<=t.max_score?'white':'#555'};font-size:13px;font-weight:600">
+            ${t.label}: ${t.min_score}–${t.max_score} → ${Number(t.bonus_amount).toLocaleString('tr-TR')} ₺
+          </div>`).join('')}
+        </div>`;
+    } catch(e) { box.innerHTML = `<p class="text-danger text-center">${e.message}</p>`; }
+  }
+
+  async function viewStudent(id) {
+    const s = myStudents.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('mStuTitle').textContent = s.first_name + ' ' + s.last_name;
+    document.getElementById('mStuBody').innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin"></i></div>';
+    openModal('modalStu');
+    try {
+      const exams = await API.getExams(id);
+      document.getElementById('mStuBody').innerHTML = `
+        <div style="font-size:13px;color:#555;padding:12px;background:#f8f9fa;border-radius:8px;margin-bottom:14px">
+          <strong>TC:</strong> ${maskTc(s.tc_no)} &nbsp;|&nbsp; <strong>Tel:</strong> ${s.phone||'-'}<br>
+          <strong>Kayıt:</strong> ${fmtDate(s.created_at)}
+          ${s.notes?`<br><strong>Not:</strong> ${s.notes}`:''}
+        </div>
+        <h6 style="font-weight:700;margin-bottom:8px">Sınav Geçmişi</h6>
+        ${exams.length?`<table class="okan-table" style="font-size:13px">
+          <thead><tr><th>Tarih</th><th>Tür</th><th>Puan</th><th>Sonuç</th></tr></thead>
+          <tbody>${exams.map(e=>`<tr><td>${fmtDate(e.exam_date)}</td><td>${e.exam_type||'-'}</td><td>${e.score!=null?e.score:'-'}</td><td>${examBadge(e.result)}</td></tr>`).join('')}</tbody>
+        </table>`:'<p class="text-muted" style="font-size:13px">Sınav kaydı yok.</p>'}`;
+    } catch(e) { document.getElementById('mStuBody').innerHTML = `<p class="text-danger">${e.message}</p>`; }
+  }
+
+  function showAlert(targetId, msg, type) {
+    const el = document.getElementById(targetId);
+    el.className = 'alert alert-'+(type==='error'?'error':'success');
+    el.innerHTML = `<i class="fas fa-${type==='error'?'exclamation-triangle':'check-circle'} me-2"></i>${msg}`;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display='none', 4000);
+  }
+</script>
+</body>
+</html>

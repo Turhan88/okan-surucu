@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yönetici Paneli - Okan Sürücü Kursları</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/okan.css">
+  <style>
+    .page{display:none}.page.active{display:block}
+    .sidebar .nav-item.active{background:#fff0f2;color:#c41e3a;border-left-color:#c41e3a}
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+    @media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+    .score-bar{height:5px;background:#e0e0e0;border-radius:3px;margin-top:4px}
+    .score-fill{height:100%;background:linear-gradient(90deg,#c41e3a,#8b0000);border-radius:3px}
+    .tc-full{font-family:monospace;letter-spacing:1px}
+    .filter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+    .filter-row input,.filter-row select{padding:8px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;font-family:'Inter',sans-serif}
+    .filter-row input:focus,.filter-row select:focus{border-color:#c41e3a}
+  </style>
+</head>
+<body>
+<nav class="okan-nav">
+  <a href="#" class="brand"><i class="fas fa-steering-wheel"></i> OKAN SÜRÜCÜ KURSLARI — YÖNETİCİ</a>
+  <div class="nav-right">
+    <div class="user-badge"><i class="fas fa-shield-alt"></i> Yönetici</div>
+    <a href="#" class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Çıkış</a>
+  </div>
+</nav>
+
+<div class="app-layout">
+  <div class="sidebar">
+    <div class="nav-section">YÖNETİM</div>
+    <div class="nav-item active" onclick="sp('dashboard',this)"><i class="fas fa-tachometer-alt"></i> Genel Bakış</div>
+    <div class="nav-item" onclick="sp('ogretmenler',this)"><i class="fas fa-chalkboard-teacher"></i> Öğretmenler</div>
+    <div class="nav-item" onclick="sp('kursiyerler',this)"><i class="fas fa-users"></i> Kursiyerler</div>
+    <div class="nav-section">RAPORLAR</div>
+    <div class="nav-item" onclick="sp('anketler',this)"><i class="fas fa-star"></i> Anket Sonuçları</div>
+    <div class="nav-item" onclick="sp('prim',this)"><i class="fas fa-trophy"></i> Prim Hesaplama</div>
+    <div class="nav-section">SİSTEM</div>
+    <div class="nav-item" onclick="sp('eslekler',this)"><i class="fas fa-sliders-h"></i> Prim Eşikleri</div>
+    <div class="nav-item" onclick="sp('auditlog',this)"><i class="fas fa-history"></i> İşlem Kayıtları</div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="section-hd"><h4><i class="fas fa-tachometer-alt me-2" style="color:#c41e3a"></i>Genel Bakış</h4></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Öğretmen</div><div class="stat-value" id="d-ins">-</div></div>
+        <div class="stat-card"><div class="stat-label">Kursiyer</div><div class="stat-value" id="d-stu">-</div></div>
+        <div class="stat-card"><div class="stat-label">Toplam Anket</div><div class="stat-value" id="d-srv">-</div></div>
+        <div class="stat-card"><div class="stat-label">Bu Ay Anket</div><div class="stat-value" id="d-msrv">-</div></div>
+      </div>
+      <div class="okan-card">
+        <div class="card-head">
+          <span><i class="fas fa-chart-bar me-2"></i>Öğretmen Performans Özeti</span>
+          <button class="btn-red" style="padding:6px 14px;font-size:12px" onclick="exportDashboard()"><i class="fas fa-download me-1"></i>CSV</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="d-table">
+            <thead><tr><th>Öğretmen</th><th>Kursiyer</th><th>Anket</th><th>Ort. Puan</th><th>Bu Ay Prim</th></tr></thead>
+            <tbody><tr><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÖĞRETMENLER -->
+    <div id="page-ogretmenler" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-chalkboard-teacher me-2" style="color:#c41e3a"></i>Öğretmenler</h4>
+        <button class="btn-red" onclick="openModal('mAddIns')"><i class="fas fa-plus me-1"></i>Öğretmen Ekle</button>
+      </div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="ins-table">
+            <thead><tr><th>Ad Soyad</th><th>Sicil No</th><th>Telefon</th><th>Kursiyer</th><th>Anket</th><th>Ort.</th><th>Anket Linki</th><th>İşlem</th></tr></thead>
+            <tbody><tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- KURSİYERLER -->
+    <div id="page-kursiyerler" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-users me-2" style="color:#c41e3a"></i>Kursiyerler</h4>
+        <button class="btn-red" style="padding:6px 14px;font-size:12px" onclick="exportStudents()"><i class="fas fa-download me-1"></i>CSV İndir</button>
+      </div>
+      <div class="filter-row">
+        <input type="text" id="stuSearch" placeholder="Ad, soyad veya TC ara..." oninput="filterStudents()" style="flex:1;max-width:320px">
+        <select id="stuInsFilter" onchange="filterStudents()"><option value="">Tüm Öğretmenler</option></select>
+      </div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="stu-table">
+            <thead><tr><th>Ad Soyad</th><th>TC No</th><th>Öğretmen</th><th>Telefon</th><th>Anket</th><th>Son Sınav</th><th>İşlem</th></tr></thead>
+            <tbody><tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANKET SONUÇLARI -->
+    <div id="page-anketler" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-star me-2" style="color:#c41e3a"></i>Anket Sonuçları</h4>
+        <button class="btn-red" style="padding:6px 14px;font-size:12px" onclick="exportSurveys()"><i class="fas fa-download me-1"></i>CSV İndir</button>
+      </div>
+      <div class="filter-row">
+        <select id="srvInsFilter" onchange="loadSurveys()"><option value="">Tüm Öğretmenler</option></select>
+        <input type="date" id="srvDateFrom" onchange="loadSurveys()" placeholder="Başlangıç">
+        <input type="date" id="srvDateTo"   onchange="loadSurveys()" placeholder="Bitiş">
+      </div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="srv-table">
+            <thead><tr><th>Tarih</th><th>Öğretmen</th><th>Kursiyer TC</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th><th>Q6</th><th>Q7</th><th>Ort.</th></tr></thead>
+            <tbody><tr><td colspan="11" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRİM HESAPLAMA -->
+    <div id="page-prim" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-trophy me-2" style="color:#c41e3a"></i>Aylık Prim Hesaplama</h4>
+        <div style="display:flex;gap:10px;align-items:center">
+          <select class="form-control" id="primMonth" onchange="loadPrim()" style="width:200px;padding:8px 12px"></select>
+          <button class="btn-red" onclick="calcAllBonuses()"><i class="fas fa-calculator me-1"></i>Hesapla</button>
+          <button class="btn-red" style="padding:6px 14px;font-size:12px" onclick="exportPrim()"><i class="fas fa-download me-1"></i>CSV</button>
+        </div>
+      </div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="prim-table">
+            <thead><tr><th>Öğretmen</th><th>Anket</th><th>Ort. Puan</th><th>Eşik</th><th>Prim</th><th>Ödendi?</th></tr></thead>
+            <tbody><tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRİM EŞİKLERİ -->
+    <div id="page-eslekler" class="page">
+      <div class="section-hd"><h4><i class="fas fa-sliders-h me-2" style="color:#c41e3a"></i>Prim Eşikleri (Yapılandırılabilir)</h4></div>
+      <div class="okan-card" style="max-width:600px">
+        <div class="card-body">
+          <p style="font-size:14px;color:#666;margin-bottom:16px">Prim hesaplama eşiklerini buradan düzenleyebilirsiniz. Değişiklikler anında geçerli olur.</p>
+          <div id="thresholdList"><i class="fas fa-spinner fa-spin"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- İŞLEM KAYITLARI -->
+    <div id="page-auditlog" class="page">
+      <div class="section-hd"><h4><i class="fas fa-history me-2" style="color:#c41e3a"></i>İşlem Kayıtları</h4></div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="audit-table">
+            <thead><tr><th>Tarih</th><th>Rol</th><th>İşlem</th><th>Tablo</th><th>Kayıt ID</th></tr></thead>
+            <tbody><tr><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ÖĞRETMEN EKLE -->
+<div class="modal-overlay" id="mAddIns" onclick="if(event.target===this)closeModal('mAddIns')">
+  <div class="modal-box">
+    <div class="modal-header"><span>Öğretmen Ekle</span><button class="modal-close" onclick="closeModal('mAddIns')">✕</button></div>
+    <div class="modal-body">
+      <div id="addInsAlert"></div>
+      <div class="form-group"><label>Ad *</label><input type="text" class="form-control" id="iFn"></div>
+      <div class="form-group"><label>Soyad *</label><input type="text" class="form-control" id="iLn"></div>
+      <div class="form-group"><label>Sicil No *</label><input type="text" class="form-control" id="iSicil"></div>
+      <div class="form-group"><label>Telefon</label><input type="tel" class="form-control" id="iPhone"></div>
+      <div class="form-group"><label>Şifre *</label><input type="password" class="form-control" id="iPass" placeholder="En az 8 karakter"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-red" onclick="closeModal('mAddIns')">İptal</button>
+      <button class="btn-red" id="btnAddIns" onclick="addInstructor()"><i class="fas fa-save me-1"></i>Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ÖĞRETMEN DÜZENLE -->
+<div class="modal-overlay" id="mEditIns" onclick="if(event.target===this)closeModal('mEditIns')">
+  <div class="modal-box">
+    <div class="modal-header"><span>Öğretmen Düzenle</span><button class="modal-close" onclick="closeModal('mEditIns')">✕</button></div>
+    <div class="modal-body">
+      <div id="editInsAlert"></div>
+      <input type="hidden" id="editInsId">
+      <div class="form-group"><label>Ad *</label><input type="text" class="form-control" id="eiFn"></div>
+      <div class="form-group"><label>Soyad *</label><input type="text" class="form-control" id="eiLn"></div>
+      <div class="form-group"><label>Sicil No *</label><input type="text" class="form-control" id="eiSicil"></div>
+      <div class="form-group"><label>Telefon</label><input type="tel" class="form-control" id="eiPhone"></div>
+      <div class="form-group"><label>Yeni Şifre <span style="color:#888;font-size:12px">(boş bırakılırsa değişmez)</span></label>
+        <input type="password" class="form-control" id="eiPass"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-red" onclick="closeModal('mEditIns')">İptal</button>
+      <button class="btn-red" onclick="updateInstructor()"><i class="fas fa-save me-1"></i>Güncelle</button>
+    </div>
+  </div>
+</div>
+
+<!-- KURSİYER DETAY -->
+<div class="modal-overlay" id="mStu" onclick="if(event.target===this)closeModal('mStu')">
+  <div class="modal-box" style="max-width:640px">
+    <div class="modal-header"><span id="mStuTitle">Kursiyer</span><button class="modal-close" onclick="closeModal('mStu')">✕</button></div>
+    <div class="modal-body" id="mStuBody"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/.netlify/functions/config"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/api.js"></script>
+<script>
+  initSupabase();
+  let allStudents  = [];
+  let allTeachers  = [];
+  let allSurveys   = [];
+  let bonusData    = [];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const profile = await API.getMyProfile();
+    if (!profile || profile.role !== 'admin') { location.href='index.html'; return; }
+    populateMonths('primMonth');
+    await loadDashboard();
+  });
+
+  async function doLogout() { await API.logout(); location.href='index.html'; }
+
+  function sp(name, el) {
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+name).classList.add('active');
+    document.querySelectorAll('.sidebar .nav-item').forEach(n=>n.classList.remove('active'));
+    if (el) el.classList.add('active');
+    if (name==='ogretmenler') loadInstructors();
+    if (name==='kursiyerler') loadStudents();
+    if (name==='anketler')    { populateSrvFilter(); loadSurveys(); }
+    if (name==='prim')        loadPrim();
+    if (name==='eslekler')    loadThresholds();
+    if (name==='auditlog')    loadAuditLog();
+  }
+
+  function openModal(id)  { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  function populateMonths(selId) {
+    const sel = document.getElementById(selId);
+    const now = new Date();
+    for (let i=0;i<12;i++) {
+      const d = new Date(now.getFullYear(),now.getMonth()-i,1);
+      const v = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      sel.innerHTML += `<option value="${v}">${d.toLocaleDateString('tr-TR',{year:'numeric',month:'long'})}</option>`;
+    }
+  }
+
+  function showAlert(id, msg, type) {
+    const el = document.getElementById(id);
+    el.className = 'alert alert-'+(type==='error'?'error':'success');
+    el.innerHTML = `<i class="fas fa-${type==='error'?'exclamation-triangle':'check-circle'} me-2"></i>${msg}`;
+    el.style.display = 'block';
+    setTimeout(()=>el.style.display='none', 4000);
+  }
+
+  // ── DASHBOARD ───────────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const [teachers, students, surveys] = await Promise.all([
+        API.getTeachers(), API.getStudents(), API.getSurveys()
+      ]);
+      allTeachers = teachers; allStudents = students; allSurveys = surveys;
+      const month = currentMonth();
+      document.getElementById('d-ins').textContent  = teachers.length;
+      document.getElementById('d-stu').textContent  = students.length;
+      document.getElementById('d-srv').textContent  = surveys.length;
+      document.getElementById('d-msrv').textContent = surveys.filter(s=>s.month===month).length;
+
+      const tbody = document.querySelector('#d-table tbody');
+      tbody.innerHTML = teachers.map(ins => {
+        const srvs = surveys.filter(s=>s.teacher_id===ins.id);
+        const avg  = srvs.length ? (srvs.reduce((a,s)=>a+(s.avg_score||0),0)/srvs.length).toFixed(2) : null;
+        const stus = students.filter(s=>s.teacher_id===ins.id);
+        const init = ins.first_name.charAt(0)+ins.last_name.charAt(0);
+        return `<tr>
+          <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar-circle">${init}</div><strong>${ins.first_name} ${ins.last_name}</strong></div></td>
+          <td>${stus.length}</td><td>${srvs.length}</td>
+          <td>${avg?`${avg}/5<div class="score-bar"><div class="score-fill" style="width:${(avg/5)*100}%"></div></div>`:'-'}</td>
+          <td>-</td></tr>`;
+      }).join('') || '<tr><td colspan="5" class="text-center text-muted py-4">Öğretmen eklenmemiş.</td></tr>';
+    } catch(e) { console.error(e); }
+  }
+
+  // ── ÖĞRETMENLER ─────────────────────────────────────
+  async function loadInstructors() {
+    const tbody = document.querySelector('#ins-table tbody');
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const teachers  = await API.getTeachers();
+      allTeachers = teachers;
+      const base = location.href.replace('admin-panel.html','');
+      tbody.innerHTML = teachers.map(ins => {
+        const link = `${base}anket.html?ogretmen=${ins.id}`;
+        const init = ins.first_name.charAt(0)+ins.last_name.charAt(0);
+        const srvs = allSurveys.filter(s=>s.teacher_id===ins.id);
+        const avg  = srvs.length?(srvs.reduce((a,s)=>a+(s.avg_score||0),0)/srvs.length).toFixed(2):'-';
+        return `<tr>
+          <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar-circle">${init}</div>
+            <div><strong>${ins.first_name} ${ins.last_name}</strong>
+            ${!ins.is_active?'<span class="badge badge-orange ms-1">Pasif</span>':''}</div>
+          </div></td>
+          <td>${ins.sicil_no}</td>
+          <td>${ins.phone||'-'}</td>
+          <td>${allStudents.filter(s=>s.teacher_id===ins.id).length}</td>
+          <td>${srvs.length}</td>
+          <td>${avg}/5</td>
+          <td><div style="display:flex;gap:4px;align-items:center">
+            <input style="font-size:11px;background:#f8f9fa;border:1px solid #e0e0e0;border-radius:5px;padding:4px 8px;width:180px;cursor:pointer"
+              value="${link}" readonly onclick="this.select();document.execCommand('copy');showToast('Link kopyalandı!')">
+            <button class="btn-red" style="padding:5px 8px;font-size:12px" onclick="window.open('${link}','_blank')" title="Anketi Aç"><i class="fas fa-external-link-alt"></i></button>
+          </div></td>
+          <td><div style="display:flex;gap:5px">
+            <button class="btn-outline-red" style="padding:5px 10px;font-size:12px" onclick="openEditIns('${ins.id}')"><i class="fas fa-edit"></i></button>
+            ${ins.is_active?`<button style="padding:5px 10px;font-size:12px;background:#fd7e14;color:white;border:none;border-radius:8px;cursor:pointer" onclick="deactivateIns('${ins.id}','${ins.first_name} ${ins.last_name}')"><i class="fas fa-ban"></i></button>`:''}
+          </div></td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="8" class="text-center text-muted py-4">Öğretmen eklenmemiş.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  async function addInstructor() {
+    const fn = document.getElementById('iFn').value.trim();
+    const ln = document.getElementById('iLn').value.trim();
+    const sc = document.getElementById('iSicil').value.trim();
+    const ph = document.getElementById('iPhone').value.trim();
+    const pw = document.getElementById('iPass').value;
+    if (!fn||!ln||!sc||!pw) return showAlert('addInsAlert','Tüm zorunlu alanları doldurun.','error');
+    if (pw.length < 8)      return showAlert('addInsAlert','Şifre en az 8 karakter olmalıdır.','error');
+    const btn = document.getElementById('btnAddIns');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Oluşturuluyor...';
+    try {
+      await API.createTeacher({ firstName:fn, lastName:ln, sicilNo:sc, phone:ph||undefined, password:pw });
+      showAlert('addInsAlert','Öğretmen başarıyla oluşturuldu!','success');
+      ['iFn','iLn','iSicil','iPhone','iPass'].forEach(id=>document.getElementById(id).value='');
+      setTimeout(()=>closeModal('mAddIns'), 1200);
+      loadInstructors();
+    } catch(e) { showAlert('addInsAlert',e.message,'error'); }
+    finally { btn.disabled=false; btn.innerHTML='<i class="fas fa-save me-1"></i>Kaydet'; }
+  }
+
+  function openEditIns(id) {
+    const ins = allTeachers.find(t=>t.id===id); if(!ins) return;
+    document.getElementById('editInsId').value = id;
+    document.getElementById('eiFn').value    = ins.first_name;
+    document.getElementById('eiLn').value    = ins.last_name;
+    document.getElementById('eiSicil').value = ins.sicil_no;
+    document.getElementById('eiPhone').value = ins.phone||'';
+    document.getElementById('eiPass').value  = '';
+    document.getElementById('editInsAlert').innerHTML='';
+    openModal('mEditIns');
+  }
+
+  async function updateInstructor() {
+    const id = document.getElementById('editInsId').value;
+    const fn = document.getElementById('eiFn').value.trim();
+    const ln = document.getElementById('eiLn').value.trim();
+    const sc = document.getElementById('eiSicil').value.trim();
+    const ph = document.getElementById('eiPhone').value.trim();
+    if (!fn||!ln||!sc) return showAlert('editInsAlert','Zorunlu alanları doldurun.','error');
+    try {
+      await API.updateTeacher(id,{first_name:fn,last_name:ln,sicil_no:sc,phone:ph||null});
+      showAlert('editInsAlert','Güncellendi!','success');
+      setTimeout(()=>{ closeModal('mEditIns'); loadInstructors(); },900);
+    } catch(e) { showAlert('editInsAlert',e.message,'error'); }
+  }
+
+  async function deactivateIns(id, name) {
+    if (!confirm(`"${name}" pasife alınacak. Bu işlem öğretmenin giriş yapmasını engelleyecek. Emin misiniz?`)) return;
+    try {
+      await API.deactivateTeacher(id);
+      showToast(`${name} pasife alındı.`);
+      loadInstructors();
+    } catch(e) { showToast(e.message,'error'); }
+  }
+
+  // ── KURSİYERLER ─────────────────────────────────────
+  async function loadStudents() {
+    const tbody = document.querySelector('#stu-table tbody');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const [students, teachers] = await Promise.all([API.getStudents(), API.getTeachers()]);
+      allStudents = students; allTeachers = teachers;
+      const sel = document.getElementById('stuInsFilter');
+      sel.innerHTML = '<option value="">Tüm Öğretmenler</option>' +
+        teachers.map(t=>`<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+      renderStudents(students, teachers);
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  function filterStudents() {
+    const q   = document.getElementById('stuSearch').value.toLowerCase();
+    const ins = document.getElementById('stuInsFilter').value;
+    renderStudents(allStudents.filter(s =>
+      (!ins || s.teacher_id === ins) &&
+      (!q || `${s.first_name} ${s.last_name}`.toLowerCase().includes(q) || s.tc_no.includes(q))
+    ), allTeachers);
+  }
+
+  function renderStudents(students, teachers) {
+    const tbody = document.querySelector('#stu-table tbody');
+    tbody.innerHTML = students.map(s => {
+      const ins = teachers.find(t=>t.id===s.teacher_id);
+      const hasSrv = allSurveys.some(sv=>sv.student_id===s.id);
+      return `<tr>
+        <td><strong>${s.first_name} ${s.last_name}</strong></td>
+        <td class="tc-full">${s.tc_no}</td>
+        <td>${ins?ins.first_name+' '+ins.last_name:'-'}</td>
+        <td>${s.phone||'-'}</td>
+        <td>${hasSrv?'<span class="badge badge-green">Doldurdu</span>':'<span class="badge badge-gray">Bekliyor</span>'}</td>
+        <td>-</td>
+        <td><div style="display:flex;gap:5px">
+          <button class="btn-outline-red" style="padding:5px 10px;font-size:12px" onclick="viewStudent('${s.id}')"><i class="fas fa-eye"></i></button>
+          <button style="padding:5px 10px;font-size:12px;background:#dc3545;color:white;border:none;border-radius:8px;cursor:pointer" onclick="deleteStu('${s.id}','${s.first_name} ${s.last_name}')"><i class="fas fa-trash"></i></button>
+        </div></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="7" class="text-center text-muted py-4">Kursiyer bulunamadı.</td></tr>';
+  }
+
+  async function deleteStu(id, name) {
+    if (!confirm(`"${name}" pasife alınacak (soft delete). Veriler korunacak. Emin misiniz?`)) return;
+    try { await API.softDeleteStudent(id); showToast(`${name} pasife alındı.`); loadStudents(); }
+    catch(e) { showToast(e.message,'error'); }
+  }
+
+  async function viewStudent(id) {
+    const s = allStudents.find(x=>x.id===id); if(!s) return;
+    document.getElementById('mStuTitle').textContent = s.first_name+' '+s.last_name;
+    document.getElementById('mStuBody').innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin"></i></div>';
+    openModal('mStu');
+    const ins = allTeachers.find(t=>t.id===s.teacher_id);
+    try {
+      const exams = await API.getExams(id);
+      document.getElementById('mStuBody').innerHTML = `
+        <div style="font-size:13px;color:#555;background:#f8f9fa;border-radius:8px;padding:12px;margin-bottom:14px">
+          <strong>TC (Tam):</strong> <span class="tc-full">${s.tc_no}</span><br>
+          <strong>Telefon:</strong> ${s.phone||'-'}<br>
+          <strong>Öğretmen:</strong> ${ins?ins.first_name+' '+ins.last_name:'-'}<br>
+          <strong>Kayıt:</strong> ${fmtDate(s.created_at)}
+        </div>
+        <h6 style="font-weight:700;margin-bottom:8px">Sınav Geçmişi (${exams.length})</h6>
+        ${exams.length?`<table class="okan-table" style="font-size:13px">
+          <thead><tr><th>Tarih</th><th>Tür</th><th>Puan</th><th>Sonuç</th><th>Not</th></tr></thead>
+          <tbody>${exams.map(e=>`<tr><td>${fmtDate(e.exam_date)}</td><td>${e.exam_type||'-'}</td>
+            <td>${e.score!=null?e.score:'-'}</td><td>${examBadge(e.result)}</td><td>${e.notes||'-'}</td></tr>`).join('')}
+          </tbody></table>`:'<p class="text-muted" style="font-size:13px">Sınav kaydı yok.</p>'}`;
+    } catch(e) { document.getElementById('mStuBody').innerHTML = `<p class="text-danger">${e.message}</p>`; }
+  }
+
+  // ── ANKETLER ─────────────────────────────────────────
+  function populateSrvFilter() {
+    const sel = document.getElementById('srvInsFilter');
+    sel.innerHTML = '<option value="">Tüm Öğretmenler</option>' +
+      allTeachers.map(t=>`<option value="${t.id}">${t.first_name} ${t.last_name}</option>`).join('');
+  }
+
+  async function loadSurveys() {
+    const tbody = document.querySelector('#srv-table tbody');
+    tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const surveys = await API.getSurveys({
+        teacherId: document.getElementById('srvInsFilter').value || null,
+        dateFrom:  document.getElementById('srvDateFrom').value || null,
+        dateTo:    document.getElementById('srvDateTo').value   || null
+      });
+      allSurveys = surveys;
+      tbody.innerHTML = surveys.map(s => `<tr>
+        <td>${fmtDate(s.submitted_at)}</td>
+        <td>${s.teachers?s.teachers.first_name+' '+s.teachers.last_name:'-'}</td>
+        <td class="tc-full">${s.students?.tc_no||'-'}</td>
+        <td colspan="5"><em style="color:#888;font-size:12px">Detaylar ayrı sorgu ile alınabilir</em></td>
+        <td></td><td></td>
+        <td><strong>${s.avg_score||'-'}</strong></td>
+      </tr>`).join('') || '<tr><td colspan="11" class="text-center text-muted py-4">Anket bulunamadı.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="11" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  // ── PRİM ─────────────────────────────────────────────
+  async function loadPrim() {
+    const month = document.getElementById('primMonth').value;
+    const tbody = document.querySelector('#prim-table tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const bonuses = await API.getBonuses(month);
+      bonusData = bonuses;
+      tbody.innerHTML = bonuses.map(b => {
+        const ins = b.teachers;
+        const init = ins?ins.first_name.charAt(0)+ins.last_name.charAt(0):'?';
+        return `<tr>
+          <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar-circle">${init}</div>
+            <strong>${ins?ins.first_name+' '+ins.last_name:'-'}</strong></div></td>
+          <td>${b.survey_count}</td>
+          <td>${b.avg_score!=null?b.avg_score+'/5':'-'}</td>
+          <td>${b.threshold_label||'Prim Yok'}</td>
+          <td>${primBadge(b.bonus_amount)}</td>
+          <td>${b.is_paid?'<span class="badge badge-green">Ödendi ✓</span>':
+            `<button class="btn-outline-red" style="padding:4px 10px;font-size:12px" onclick="markPaid('${b.id}')">Öde</button>`}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="6" class="text-center text-muted py-4">Bu ay için prim kaydı yok. "Hesapla" butonuna basın.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  async function calcAllBonuses() {
+    const month = document.getElementById('primMonth').value;
+    try {
+      showToast('Hesaplanıyor...');
+      await Promise.all(allTeachers.map(t => API.calculateBonus(t.id, month)));
+      showToast('Tüm primler hesaplandı!');
+      loadPrim();
+    } catch(e) { showToast(e.message,'error'); }
+  }
+
+  async function markPaid(bonusId) {
+    try { await API.markBonusPaid(bonusId); showToast('Ödendi olarak işaretlendi!'); loadPrim(); }
+    catch(e) { showToast(e.message,'error'); }
+  }
+
+  // ── PRİM EŞİKLERİ ───────────────────────────────────
+  async function loadThresholds() {
+    const box = document.getElementById('thresholdList');
+    try {
+      const thresholds = await API.getThresholds();
+      box.innerHTML = thresholds.map(t => `
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px">
+          <input style="flex:1;padding:7px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px" value="${t.label}" id="tl-${t.id}" placeholder="Etiket">
+          <input type="number" style="width:80px;padding:7px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px" value="${t.min_score}" id="tmin-${t.id}" step="0.1">
+          <span style="color:#888">–</span>
+          <input type="number" style="width:80px;padding:7px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px" value="${t.max_score}" id="tmax-${t.id}" step="0.1">
+          <input type="number" style="width:100px;padding:7px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px" value="${t.bonus_amount}" id="tamt-${t.id}">
+          <button class="btn-red" style="padding:6px 12px;font-size:12px" onclick="saveThreshold('${t.id}')"><i class="fas fa-save"></i></button>
+        </div>`).join('');
+    } catch(e) { box.innerHTML = `<p class="text-danger">${e.message}</p>`; }
+  }
+
+  async function saveThreshold(id) {
+    try {
+      await API.updateThreshold(id, {
+        label:        document.getElementById(`tl-${id}`).value,
+        min_score:    +document.getElementById(`tmin-${id}`).value,
+        max_score:    +document.getElementById(`tmax-${id}`).value,
+        bonus_amount: +document.getElementById(`tamt-${id}`).value
+      });
+      showToast('Eşik güncellendi!');
+    } catch(e) { showToast(e.message,'error'); }
+  }
+
+  // ── AUDIT LOG ─────────────────────────────────────────
+  async function loadAuditLog() {
+    const tbody = document.querySelector('#audit-table tbody');
+    try {
+      const logs = await API.getAuditLogs({ limit:100 });
+      tbody.innerHTML = logs.map(l => `<tr>
+        <td>${fmtDateTime(l.created_at)}</td>
+        <td><span class="badge ${l.role==='admin'?'badge-red':'badge-blue'}">${l.role||'-'}</span></td>
+        <td>${l.action}</td>
+        <td>${l.table_name||'-'}</td>
+        <td style="font-size:11px;font-family:monospace">${l.record_id?l.record_id.substring(0,8)+'...':'-'}</td>
+      </tr>`).join('') || '<tr><td colspan="5" class="text-center text-muted py-4">Kayıt yok.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  // ── CSV EXPORTS ──────────────────────────────────────
+  function exportDashboard() {
+    const rows = [['Öğretmen','Kursiyer Sayısı','Anket Sayısı','Ort Puan']];
+    allTeachers.forEach(t => {
+      const srvs = allSurveys.filter(s=>s.teacher_id===t.id);
+      const avg  = srvs.length?(srvs.reduce((a,s)=>a+(s.avg_score||0),0)/srvs.length).toFixed(2):0;
+      rows.push([t.first_name+' '+t.last_name, allStudents.filter(s=>s.teacher_id===t.id).length, srvs.length, avg]);
+    });
+    exportCsv(rows, `okan-ozet-${currentMonth()}.csv`);
+  }
+
+  function exportStudents() {
+    const rows = [['Ad','Soyad','TC Kimlik No','Öğretmen','Telefon','Kayıt Tarihi']];
+    allStudents.forEach(s => {
+      const ins = allTeachers.find(t=>t.id===s.teacher_id);
+      rows.push([s.first_name, s.last_name, s.tc_no, ins?ins.first_name+' '+ins.last_name:'-', s.phone||'', fmtDate(s.created_at)]);
+    });
+    exportCsv(rows, `okan-kursiyerler-${currentMonth()}.csv`);
+  }
+
+  function exportSurveys() {
+    const rows = [['Tarih','Öğretmen','Kursiyer TC','Ort Puan']];
+    allSurveys.forEach(s => {
+      rows.push([fmtDate(s.submitted_at), s.teachers?s.teachers.first_name+' '+s.teachers.last_name:'-', s.students?.tc_no||'-', s.avg_score||'-']);
+    });
+    exportCsv(rows, `okan-anketler-${currentMonth()}.csv`);
+  }
+
+  function exportPrim() {
+    const rows = [['Öğretmen','Sicil No','Anket','Ort Puan','Eşik','Prim (TL)','Ödendi']];
+    bonusData.forEach(b => {
+      const ins = b.teachers;
+      rows.push([ins?ins.first_name+' '+ins.last_name:'-', ins?.sicil_no||'-', b.survey_count, b.avg_score||0, b.threshold_label||'-', b.bonus_amount, b.is_paid?'Evet':'Hayır']);
+    });
+    exportCsv(rows, `okan-prim-${document.getElementById('primMonth').value}.csv`);
+  }
+</script>
+</body>
+</html>

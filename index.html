@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Okan Sürücü Kursları - Öğretmen Değerlendirme ve Prim Takip Sistemi">
+  <title>Okan Sürücü Kursları</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family:'Inter',sans-serif; background:linear-gradient(135deg,#c41e3a 0%,#6b0000 100%); min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 16px; }
+    .hero { text-align:center; color:white; margin-bottom:40px; }
+    .hero .logo-wrap { width:110px;height:110px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 8px 30px rgba(0,0,0,0.3); }
+    .hero .logo-wrap i { font-size:44px; color:#c41e3a; }
+    .hero h1 { font-size:28px;font-weight:800;margin-bottom:6px; }
+    .hero p  { font-size:15px;opacity:.85;margin:0; }
+    .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; max-width:880px; width:100%; }
+    .card { background:white;border-radius:20px;padding:36px 24px;text-align:center;cursor:pointer;transition:all .3s;border:3px solid transparent;box-shadow:0 8px 30px rgba(0,0,0,.15); }
+    .card:hover { transform:translateY(-8px);border-color:rgba(255,255,255,.6);box-shadow:0 20px 50px rgba(0,0,0,.25); }
+    .card .icon { width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 18px; }
+    .card h3 { font-size:18px;font-weight:700;color:#222;margin-bottom:8px; }
+    .card p  { font-size:13px;color:#777;margin:0;line-height:1.5; }
+    .card .btn { display:inline-block;margin-top:20px;padding:10px 28px;border-radius:25px;font-weight:700;font-size:14px;border:2px solid;transition:all .2s; }
+    .card.kursiyer .icon { background:#fff0f2;color:#c41e3a; }
+    .card.kursiyer .btn  { color:#c41e3a;border-color:#c41e3a; }
+    .card.kursiyer:hover .btn { background:#c41e3a;color:white; }
+    .card.ogretmen .icon { background:#e8f4ff;color:#0066cc; }
+    .card.ogretmen .btn  { color:#0066cc;border-color:#0066cc; }
+    .card.ogretmen:hover .btn { background:#0066cc;color:white; }
+    .card.admin .icon    { background:#f0fff4;color:#1a7a3f; }
+    .card.admin .btn     { color:#1a7a3f;border-color:#1a7a3f; }
+    .card.admin:hover .btn { background:#1a7a3f;color:white; }
+    .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:white;border-radius:16px;width:90%;max-width:400px;overflow:hidden;animation:mIn .25s ease; }
+    @keyframes mIn { from{transform:scale(.85);opacity:0} to{transform:scale(1);opacity:1} }
+    .m-head { padding:18px 22px;font-size:16px;font-weight:700;color:white;display:flex;justify-content:space-between;align-items:center; }
+    .m-body { padding:24px; }
+    .field  { margin-bottom:14px; }
+    .field label { display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:6px; }
+    .field input { width:100%;padding:11px 14px;border:2px solid #e0e0e0;border-radius:9px;font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s; }
+    .field input:focus { border-color:#c41e3a; }
+    .login-btn { width:100%;padding:13px;border:none;border-radius:10px;font-size:15px;font-weight:700;color:white;cursor:pointer;transition:all .2s;margin-top:6px; }
+    .login-btn:hover { transform:translateY(-2px); }
+    .login-err { display:none;background:#f8d7da;color:#721c24;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px; }
+    .mc { font-size:20px;cursor:pointer;background:none;border:none;color:white;line-height:1; }
+    @media(max-width:700px){.cards{grid-template-columns:1fr;max-width:360px}.hero h1{font-size:22px}}
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="logo-wrap"><i class="fas fa-steering-wheel"></i></div>
+  <h1>OKAN SÜRÜCÜ KURSLARI</h1>
+  <p>Öğretmen Değerlendirme ve Prim Takip Sistemi</p>
+</div>
+
+<div class="cards">
+  <div class="card kursiyer" onclick="location.href='kursiyer.html'">
+    <div class="icon"><i class="fas fa-id-card"></i></div>
+    <h3>Kursiyer Girişi</h3>
+    <p>TC kimlik numaranızla giriş yapın ve eğitmeninizi değerlendirin.</p>
+    <div class="btn">Giriş Yap →</div>
+  </div>
+  <div class="card ogretmen" onclick="openModal('mOgr')">
+    <div class="icon"><i class="fas fa-chalkboard-teacher"></i></div>
+    <h3>Öğretmen Paneli</h3>
+    <p>Kursiyerlerinizi yönetin ve sınav sonuçlarını girin.</p>
+    <div class="btn">Giriş Yap →</div>
+  </div>
+  <div class="card admin" onclick="openModal('mAdmin')">
+    <div class="icon"><i class="fas fa-shield-alt"></i></div>
+    <h3>Yönetici Paneli</h3>
+    <p>Sistemi yönetin, prim hesaplayın, raporları görüntüleyin.</p>
+    <div class="btn">Giriş Yap →</div>
+  </div>
+</div>
+
+<!-- Öğretmen Girişi -->
+<div class="modal-overlay" id="mOgr" onclick="closeOut(event,'mOgr')">
+  <div class="modal-box">
+    <div class="m-head" style="background:linear-gradient(135deg,#0066cc,#004499)">
+      <span><i class="fas fa-chalkboard-teacher me-2"></i>Öğretmen Girişi</span>
+      <button class="mc" onclick="closeModal('mOgr')">✕</button>
+    </div>
+    <div class="m-body">
+      <div class="login-err" id="errOgr"></div>
+      <div class="field"><label>Sicil Numarası</label><input type="text" id="oSicil" placeholder="Sicil numaranız" autocomplete="off"></div>
+      <div class="field"><label>Şifre</label><input type="password" id="oSifre" placeholder="Şifreniz" onkeydown="if(event.key==='Enter')doLoginOgr()"></div>
+      <button class="login-btn" id="btnOgr" style="background:linear-gradient(135deg,#0066cc,#004499)" onclick="doLoginOgr()">
+        <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Girişi -->
+<div class="modal-overlay" id="mAdmin" onclick="closeOut(event,'mAdmin')">
+  <div class="modal-box">
+    <div class="m-head" style="background:linear-gradient(135deg,#1a7a3f,#0d4a26)">
+      <span><i class="fas fa-shield-alt me-2"></i>Yönetici Girişi</span>
+      <button class="mc" onclick="closeModal('mAdmin')">✕</button>
+    </div>
+    <div class="m-body">
+      <div class="login-err" id="errAdmin"></div>
+      <div class="field"><label>E-posta</label><input type="email" id="aEmail" placeholder="admin@okan.internal" autocomplete="off"></div>
+      <div class="field"><label>Şifre</label><input type="password" id="aPass" placeholder="Şifreniz" onkeydown="if(event.key==='Enter')doLoginAdmin()"></div>
+      <button class="login-btn" id="btnAdmin" style="background:linear-gradient(135deg,#1a7a3f,#0d4a26)" onclick="doLoginAdmin()">
+        <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/.netlify/functions/config"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/api.js"></script>
+<script>
+  initSupabase();
+
+  // Aktif oturum varsa yönlendir
+  (async () => {
+    const profile = await API.getMyProfile();
+    if (profile?.role === 'admin')   location.href = 'admin-panel.html';
+    if (profile?.role === 'teacher') location.href = 'ogretmen-panel.html';
+  })();
+
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  function closeOut(e, id) { if (e.target.id === id) closeModal(id); }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.innerHTML = loading
+      ? '<i class="fas fa-spinner fa-spin me-2"></i>Giriş yapılıyor...'
+      : '<i class="fas fa-sign-in-alt me-2"></i>Giriş Yap';
+  }
+
+  async function doLoginOgr() {
+    const sicil = document.getElementById('oSicil').value.trim();
+    const pass  = document.getElementById('oSifre').value;
+    const errEl = document.getElementById('errOgr');
+    errEl.style.display = 'none';
+    if (!sicil || !pass) { errEl.textContent = 'Tüm alanları doldurun.'; errEl.style.display='block'; return; }
+    setLoading('btnOgr', true);
+    try {
+      await API.loginTeacher(sicil, pass);
+      location.href = 'ogretmen-panel.html';
+    } catch(e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+      setLoading('btnOgr', false);
+    }
+  }
+
+  async function doLoginAdmin() {
+    const email = document.getElementById('aEmail').value.trim();
+    const pass  = document.getElementById('aPass').value;
+    const errEl = document.getElementById('errAdmin');
+    errEl.style.display = 'none';
+    if (!email || !pass) { errEl.textContent = 'Tüm alanları doldurun.'; errEl.style.display='block'; return; }
+    setLoading('btnAdmin', true);
+    try {
+      await API.loginAdmin(email, pass);
+      location.href = 'admin-panel.html';
+    } catch(e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+      setLoading('btnAdmin', false);
+    }
+  }
+</script>
+</body>
+</html>

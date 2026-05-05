@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eğitmen Değerlendirme Anketi - Okan Sürücü Kursları</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <style>
+    body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#c41e3a 0%,#6b0000 100%);min-height:100vh;padding:30px 16px}
+    .wrap{max-width:780px;margin:0 auto}
+    .card{background:white;border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;margin-bottom:22px}
+    .hdr{background:linear-gradient(135deg,#c41e3a,#8b0000);padding:34px 28px;text-align:center;color:white}
+    .hdr i.main{font-size:42px;margin-bottom:12px;display:block}
+    .hdr h2{font-size:21px;font-weight:800;margin-bottom:4px}
+    .hdr .sub{font-size:13px;opacity:.88;margin-bottom:18px}
+    .hdr .anket-title{border-top:2px solid rgba(255,255,255,.25);padding-top:18px;margin-top:18px}
+    .hdr .anket-title h1{font-size:22px;font-weight:700;margin-bottom:6px}
+    .hdr .anket-title p{font-size:13px;opacity:.88;margin:0}
+    /* Exam info */
+    .exam-panel{display:none;background:#f0f7ff;border:2px solid #b3d4f5;border-radius:14px;padding:16px 18px;margin-bottom:22px}
+    .exam-panel .ep-hdr{display:flex;align-items:center;gap:8px;color:#0055aa;font-weight:700;font-size:14px;margin-bottom:10px}
+    .exam-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #d0e6f8;font-size:13px}
+    .exam-row:last-child{border-bottom:none}
+    .ed{color:#888;min-width:90px}.es{font-weight:600;color:#333;min-width:60px}
+    .ebadge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700}
+    .ep{background:#d4edda;color:#155724}.ef{background:#f8d7da;color:#721c24}
+    .eo{background:#fff3cd;color:#856404}.eg{background:#e9ecef;color:#495057}
+    /* Ins card */
+    .ins-card{background:#fff8f9;border:2px solid #f5c6d0;border-radius:14px;padding:18px 20px;margin-bottom:22px;display:flex;align-items:center;gap:16px}
+    .ins-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#c41e3a,#8b0000);color:white;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .ins-name{font-size:19px;font-weight:700;color:#222}.ins-sicil{font-size:13px;color:#888;margin-top:2px}
+    /* Body */
+    .body{padding:30px}
+    /* Q cards */
+    .q-card{background:white;border:2px solid #f0f0f0;border-radius:14px;padding:22px;margin-bottom:18px;transition:border-color .2s}
+    .q-card:hover{border-color:#c41e3a}
+    .q-label{font-size:15px;font-weight:600;color:#222;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
+    .q-num{min-width:26px;height:26px;background:linear-gradient(135deg,#c41e3a,#8b0000);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+    .req{color:#c41e3a}
+    .star-row{display:flex;gap:8px;flex-wrap:wrap}
+    .star-opt{flex:1;min-width:90px;max-width:140px}
+    .star-opt input{display:none}
+    .star-lbl{display:flex;flex-direction:column;align-items:center;padding:12px 6px;border:2px solid #e8e8e8;border-radius:12px;cursor:pointer;transition:all .2s;text-align:center;min-height:80px}
+    .star-lbl:hover{border-color:#ffc107;background:#fffbf0;transform:translateY(-2px)}
+    .star-opt input:checked+.star-lbl{border-color:#ffc107;background:linear-gradient(135deg,#ffd54f,#ffb300);transform:scale(1.04);box-shadow:0 6px 18px rgba(255,193,7,.4)}
+    .star-emoji{font-size:20px;margin-bottom:5px}.star-text{font-size:10px;color:#555;font-weight:600;line-height:1.3}
+    .choice-row{display:flex;gap:10px;flex-wrap:wrap}
+    .choice-opt{flex:1;min-width:110px}
+    .choice-opt input{display:none}
+    .choice-lbl{display:flex;flex-direction:column;align-items:center;padding:16px 10px;border:2px solid #e8e8e8;border-radius:12px;cursor:pointer;transition:all .2s;text-align:center}
+    .choice-lbl:hover{border-color:#c41e3a;background:#fff8f9;transform:translateY(-2px)}
+    .choice-opt input:checked+.choice-lbl{border-color:#c41e3a;background:linear-gradient(135deg,#c41e3a,#8b0000);color:white;transform:scale(1.04);box-shadow:0 6px 18px rgba(196,30,58,.4)}
+    .choice-emoji{font-size:32px;margin-bottom:6px;display:block}
+    .choice-opt input:checked+.choice-lbl .choice-text{color:white}
+    .choice-text{font-size:12px;font-weight:600;color:#444}
+    .submit-btn{width:100%;padding:15px;background:linear-gradient(135deg,#c41e3a,#8b0000);color:white;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px}
+    .submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(196,30,58,.45)}
+    .submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .err-box{display:none;background:#f8d7da;color:#721c24;padding:12px 16px;border-radius:10px;margin-bottom:14px;font-size:14px;font-weight:600}
+    .privacy{background:#e8f4f8;border-left:4px solid #17a2b8;border-radius:8px;padding:14px;margin:20px 0;font-size:13px;color:#0c5460}
+    .ty{display:none;text-align:center;padding:50px 28px}
+    .ty.show{display:block;animation:fadeIn .5s ease}
+    @keyframes fadeIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+    .ty-icon{font-size:72px;color:#28a745;margin-bottom:16px}
+    .ty h2{font-size:26px;font-weight:700;color:#222;margin-bottom:10px}
+    .ty p{font-size:15px;color:#666}
+    .sel-wrap label{font-size:14px;font-weight:700;color:#c41e3a;margin-bottom:6px;display:block}
+    .sel-wrap select{width:100%;padding:11px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;font-family:'Inter',sans-serif}
+    .sel-wrap select:focus{border-color:#c41e3a}
+    @media(max-width:600px){.body{padding:18px}.star-row{flex-direction:column}.star-opt{min-width:100%;max-width:100%}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hdr">
+      <i class="main fas fa-steering-wheel"></i>
+      <h2>OKAN SÜRÜCÜ KURSLARI</h2>
+      <div class="sub">Öğretmen Değerlendirme Sistemi</div>
+      <div class="anket-title">
+        <h1><i class="fas fa-clipboard-check me-2"></i>Eğitmen Değerlendirme Anketi</h1>
+        <p>Yanıtlarınız gizlidir ve eğitim kalitesini artırmak için kullanılır.</p>
+      </div>
+    </div>
+
+    <div class="body" id="surveyForm">
+      <div id="errBox" class="err-box"></div>
+
+      <!-- Sınav bilgisi (dinamik) -->
+      <div class="exam-panel" id="examPanel">
+        <div class="ep-hdr"><i class="fas fa-graduation-cap"></i>Sınav Bilgileriniz</div>
+        <div id="examPanelName" style="font-size:14px;font-weight:700;color:#222;margin-bottom:8px"></div>
+        <div id="examPanelRows"></div>
+      </div>
+
+      <!-- Öğretmen (dinamik) -->
+      <div id="insSection"></div>
+
+      <!-- S1 -->
+      <div class="q-card">
+        <div class="q-label"><span class="q-num">1</span><span>Direksiyon randevularınız zamanında ve düzenli oluşturuldu mu? <span class="req">*</span></span></div>
+        <div class="star-row">
+          <div class="star-opt"><input type="radio" id="q1_1" name="q1" value="1" required><label for="q1_1" class="star-lbl"><span class="star-emoji">⭐</span><span class="star-text">Çok Kötü</span></label></div>
+          <div class="star-opt"><input type="radio" id="q1_2" name="q1" value="2"><label for="q1_2" class="star-lbl"><span class="star-emoji">⭐⭐</span><span class="star-text">Kötü</span></label></div>
+          <div class="star-opt"><input type="radio" id="q1_3" name="q1" value="3"><label for="q1_3" class="star-lbl"><span class="star-emoji">⭐⭐⭐</span><span class="star-text">Orta</span></label></div>
+          <div class="star-opt"><input type="radio" id="q1_4" name="q1" value="4"><label for="q1_4" class="star-lbl"><span class="star-emoji">⭐⭐⭐⭐</span><span class="star-text">İyi</span></label></div>
+          <div class="star-opt"><input type="radio" id="q1_5" name="q1" value="5"><label for="q1_5" class="star-lbl"><span class="star-emoji">⭐⭐⭐⭐⭐</span><span class="star-text">Mükemmel</span></label></div>
+        </div>
+      </div>
+      <!-- S2 -->
+      <div class="q-card">
+        <div class="q-label"><span class="q-num">2</span><span>Derslerde kendinizi ne kadar güvende hissettiniz? <span class="req">*</span></span></div>
+        <div class="star-row">
+          <div class="star-opt"><input type="radio" id="q2_1" name="q2" value="1" required><label for="q2_1" class="star-lbl"><span class="star-emoji">⭐</span><span class="star-text">Hiç Güvende Değil</span></label></div>
+          <div class="star-opt"><input type="radio" id="q2_2" name="q2" value="2"><label for="q2_2" class="star-lbl"><span class="star-emoji">⭐⭐</span><span class="star-text">Az Güvende</span></label></div>
+          <div class="star-opt"><input type="radio" id="q2_3" name="q2" value="3"><label for="q2_3" class="star-lbl"><span class="star-emoji">⭐⭐⭐</span><span class="star-text">Orta</span></label></div>
+          <div class="star-opt"><input type="radio" id="q2_4" name="q2" value="4"><label for="q2_4" class="star-lbl"><span class="star-emoji">⭐⭐⭐⭐</span><span class="star-text">Güvende</span></label></div>
+          <div class="star-opt"><input type="radio" id="q2_5" name="q2" value="5"><label for="q2_5" class="star-lbl"><span class="star-emoji">⭐⭐⭐⭐⭐</span><span class="star-text">Çok Güvende</span></label></div>
+        </div>
+      </div>
+      <!-- S3 -->
+      <div class="q-card">
+        <div class="q-label"><span class="q-num">3</span><span>Eğitmeninizin anlatımları ne kadar anlaşılır oldu? <span class="req">*</span></span></div>
+        <div class="star-row">
+          <div class="star-opt"><input type="radio" id="q3_1" name="q3" value="1" required><label for="q3_1" class="star-lbl"><span class="star-emoji">⭐</span><span class="star-text">Hiç Anlaşılır Değil</span></label></div>
+          <div class="star-opt"><input type="radio" id="q3_2" name="q3" value="2"><label for="q3_2" class="star-lbl"><span class="star-emoji">⭐⭐</span><span class="star-text">Az Anlaşılır</span></label></div>
+          <div class="star-opt"><input type="radio" id="q3_3" name="q3" value="3"><label for="q3_3" class="star-lbl"><span class="star-emoji">⭐⭐⭐</span><span class="star-text">Kısmen</span></label></div>
+          <div class="star-opt"><input type="radio" id="q3_4" name="q3" value="4"><label for="q3_4" class="star-lbl"><span class="star-emoji">⭐⭐⭐⭐</span><span class="star-text">Anlaşılır</span></label></div>
+          <div class="star-opt"><input type="radio" id="q3_5" name="q3" value="5"><label for="q3_5" class="star-lbl"><span class="star-emoji">⭐⭐⭐⭐⭐</span><span class="star-text">Çok Anlaşılır</span></label></div>
+        </div>
+      </div>
+      <!-- S4 -->
+      <div class="q-card">
+        <div class="q-label"><span class="q-num">4</span><span>Hata yaptığınızda eğitmeniniz sabırlı davrandı mı? <span class="req">*</span></span></div>
+        <div class="star-row">
+          <div class="star-opt"><input type="radio" id="q4_1" name="q4" value="1" required><label for="q4_1" class="star-lbl"><span class="star-emoji">⭐</span><span class="star-text">Hiç Sabırlı Değil</span></label></div>
+          <div class="star-opt"><input type="radio" id="q4_2" name="q4" value="2"><label for="q4_2" class="star-lbl"><span class="star-emoji">⭐⭐</span><span class="star-text">Az Sabırlı</span></label></div>
+          <div class="star-opt"><input type="radio" id="q4_3" name="q4" value="3"><label for="q4_3" class="star-lbl"><span class="star-emoji">⭐⭐⭐</span><span class="star-text">Orta</span></label></div>
+          <div class="star-opt"><input type="radio" id="q4_4" name="q4" value="4"><label for="q4_4" class="star-lbl"><span class="star-emoji">⭐⭐⭐⭐</span><span class="star-text">Sabırlı</span></label></div>
+          <div class="star-opt"><input type="radio" id="q4_5" name="q4" value="5"><label for="q4_5" class="star-lbl"><span class="star-emoji">⭐⭐⭐⭐⭐</span><span class="star-text">Çok Sabırlı</span></label></div>
+        </div>
+      </div>
+      <!-- S5 -->
+      <div class="q-card">
+        <div class="q-label"><span class="q-num">5</span><span>Eğitim sürecinde sürüş becerilerinizin geliştiğini hissettiniz mi? <span class="req">*</span></span></div>
+        <div class="star-row">
+          <div class="star-opt"><input type="radio" id="q5_1" name="q5" value="1" required><label for="q5_1" class="star-lbl"><span class="star-emoji">⭐</span><span class="star-text">Hiç Gelişme Yok</span></label></div>
+          <div class="star-opt"><input type="radio" id="q5_2" name="q5" value="2"><label for="q5_2" class="star-lbl"><span class="star-emoji">⭐⭐</span><span class="star-text">Az Gelişme</span></label></div>
+          <div class="star-opt"><input type="radio" id="q5_3" name="q5" value="3"><label for="q5_3" class="star-lbl"><span class="star-emoji">⭐⭐⭐</span><span class="star-text">Biraz Gelişme</span></label></div>
+          <div class="star-opt"><input type="radio" id="q5_4" name="q5" value="4"><label for="q5_4" class="star-lbl"><span class="star-emoji">⭐⭐⭐⭐</span><span class="star-text">Belirgin Gelişme</span></label></div>
+          <div class="star-opt"><input type="radio" id="q5_5" name="q5" value="5"><label for="q5_5" class="star-lbl"><span class="star-emoji">⭐⭐⭐⭐⭐</span><span class="star-text">Büyük Gelişme</span></label></div>
+        </div>
+      </div>
+      <!-- S6 -->
+      <div class="q-card">
+        <div class="q-label"><span class="q-num">6</span><span>Eğitimden genel memnuniyetiniz? <span class="req">*</span></span></div>
+        <div class="choice-row">
+          <div class="choice-opt"><input type="radio" id="q6_1" name="q6" value="kararsiz" required><label for="q6_1" class="choice-lbl"><span class="choice-emoji">😐</span><span class="choice-text">Kararsızım</span></label></div>
+          <div class="choice-opt"><input type="radio" id="q6_2" name="q6" value="memnun"><label for="q6_2" class="choice-lbl"><span class="choice-emoji">🙂</span><span class="choice-text">Memnunum</span></label></div>
+          <div class="choice-opt"><input type="radio" id="q6_3" name="q6" value="cok_memnun"><label for="q6_3" class="choice-lbl"><span class="choice-emoji">😊</span><span class="choice-text">Çok Memnunum</span></label></div>
+        </div>
+      </div>
+      <!-- S7 -->
+      <div class="q-card">
+        <div class="q-label"><span class="q-num">7</span><span>Bu eğitmeni yakınlarınıza tavsiye eder misiniz? <span class="req">*</span></span></div>
+        <div class="choice-row">
+          <div class="choice-opt"><input type="radio" id="q7_1" name="q7" value="hayir" required><label for="q7_1" class="choice-lbl"><span class="choice-emoji">👎</span><span class="choice-text">Hayır</span></label></div>
+          <div class="choice-opt"><input type="radio" id="q7_2" name="q7" value="belki"><label for="q7_2" class="choice-lbl"><span class="choice-emoji">🤔</span><span class="choice-text">Belki</span></label></div>
+          <div class="choice-opt"><input type="radio" id="q7_3" name="q7" value="evet"><label for="q7_3" class="choice-lbl"><span class="choice-emoji">👍</span><span class="choice-text">Kesinlikle Evet</span></label></div>
+        </div>
+      </div>
+      <!-- S8 -->
+      <div class="q-card">
+        <div class="q-label"><span class="q-num">8</span><span>Ek yorum <span style="color:#888;font-weight:400">(İsteğe Bağlı)</span></span></div>
+        <textarea id="q8" rows="4" style="width:100%;padding:11px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;resize:vertical;outline:none" placeholder="Görüş, öneri veya yorumlarınızı yazabilirsiniz..."></textarea>
+      </div>
+
+      <div class="privacy"><i class="fas fa-shield-alt me-2"></i><strong>Gizlilik:</strong> Yanıtlarınız tamamen gizlidir ve sınav sürecinizi hiçbir şekilde etkilemez.</div>
+
+      <button class="submit-btn" id="btnSubmit" onclick="submitSurvey()">
+        <i class="fas fa-paper-plane me-2"></i>Anketi Gönder
+      </button>
+    </div>
+
+    <!-- Teşekkür -->
+    <div class="ty" id="thankYou">
+      <div class="ty-icon"><i class="fas fa-check-circle"></i></div>
+      <h2>Teşekkür Ederiz! 🎉</h2>
+      <p>Anketiniz başarıyla kaydedildi.<br>Görüşleriniz eğitim kalitesini artırmamıza yardımcı olacak.</p>
+      <p style="color:#999;margin-top:8px">Güvenli sürüşler dileriz 🚗</p>
+      <a href="index.html" style="display:inline-block;margin-top:22px;padding:12px 30px;background:linear-gradient(135deg,#c41e3a,#8b0000);color:white;border-radius:10px;font-weight:700;text-decoration:none">
+        Ana Sayfaya Dön
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/.netlify/functions/config"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/api.js"></script>
+<script>
+  initSupabase();
+
+  const params    = new URLSearchParams(location.search);
+  const insId     = params.get('ogretmen');
+  const stuTcRaw  = params.get('kursiyer');
+  const scoreMap  = { kararsiz:2, memnun:4, cok_memnun:5, hayir:1, belki:3, evet:5 };
+
+  const examBadgeCls = { passed:'ep', failed:'ef', sick:'eo', 'not-taken':'eg' };
+  const examBadgeLbl = { passed:'Geçti ✓', failed:'Kaldı ✗', sick:'Raporlu', 'not-taken':'Girmedi' };
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Sınav bilgisi
+    if (stuTcRaw) {
+      try {
+        const stu = await API.getStudentByTc(stuTcRaw);
+        if (stu && stu.exams && stu.exams.length > 0) {
+          document.getElementById('examPanelName').textContent = stu.first_name + ' ' + stu.last_name;
+          document.getElementById('examPanelRows').innerHTML = stu.exams.map(e => `
+            <div class="exam-row">
+              <span class="ed"><i class="fas fa-calendar-alt me-1"></i>${e.exam_date||'-'}</span>
+              <span class="es">${e.score != null ? e.score+' puan' : '-'}</span>
+              <span class="ebadge ${examBadgeCls[e.result]||'eg'}">${examBadgeLbl[e.result]||e.result}</span>
+            </div>`).join('');
+          document.getElementById('examPanel').style.display = 'block';
+        }
+      } catch {}
+    }
+
+    // Öğretmen bölümü
+    const sec = document.getElementById('insSection');
+    if (insId) {
+      try {
+        const teachers = await API.getActiveTeachers();
+        const ins = teachers.find(t => t.id === insId);
+        if (ins) {
+          const init = ins.first_name.charAt(0) + ins.last_name.charAt(0);
+          sec.innerHTML = `<div class="ins-card">
+            <div class="ins-av">${init}</div>
+            <div><div class="ins-name">${ins.first_name} ${ins.last_name}</div>
+            ${ins.sicil_no?`<div class="ins-sicil">Sicil: ${ins.sicil_no}</div>`:''}</div>
+          </div><input type="hidden" id="selIns" value="${ins.id}">`;
+        } else { showErr('Öğretmen bulunamadı. Lütfen tekrar giriş yapın.'); }
+      } catch(e) { showErr(e.message); }
+    } else {
+      try {
+        const teachers = await API.getActiveTeachers();
+        if (!teachers.length) { showErr('Sistemde kayıtlı öğretmen bulunmuyor.'); return; }
+        sec.innerHTML = `<div class="sel-wrap" style="margin-bottom:20px">
+          <label><i class="fas fa-chalkboard-teacher me-2"></i>Eğitim Aldığınız Öğretmeni Seçin <span class="req">*</span></label>
+          <select id="selIns">
+            <option value="">-- Öğretmen seçiniz --</option>
+            ${teachers.map(t=>`<option value="${t.id}">${t.first_name} ${t.last_name}${t.sicil_no?' ('+t.sicil_no+')':''}</option>`).join('')}
+          </select></div>`;
+      } catch(e) { showErr(e.message); }
+    }
+  });
+
+  function showErr(msg) {
+    const el = document.getElementById('errBox');
+    el.textContent = msg; el.style.display = 'block';
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
+
+  function getScore(name) {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? +el.value : null;
+  }
+
+  async function submitSurvey() {
+    const teacherId = document.getElementById('selIns')?.value;
+    if (!teacherId) { showErr('Lütfen öğretmen seçiniz.'); return; }
+
+    const scores = { q1: getScore('q1'), q2: getScore('q2'), q3: getScore('q3'),
+                     q4: getScore('q4'), q5: getScore('q5') };
+    const q6val = document.querySelector('input[name="q6"]:checked')?.value;
+    const q7val = document.querySelector('input[name="q7"]:checked')?.value;
+
+    if (Object.values(scores).some(v => v === null) || !q6val || !q7val) {
+      showErr('Lütfen tüm zorunlu soruları cevaplayın!'); return;
+    }
+    if (!stuTcRaw) { showErr('Oturum bilgisi eksik. Lütfen ana sayfadan giriş yapın.'); return; }
+
+    const q8val = document.getElementById('q8').value.trim();
+    const answers = [
+      { question_key:'q1', answer_value: String(scores.q1), score_value: scores.q1 },
+      { question_key:'q2', answer_value: String(scores.q2), score_value: scores.q2 },
+      { question_key:'q3', answer_value: String(scores.q3), score_value: scores.q3 },
+      { question_key:'q4', answer_value: String(scores.q4), score_value: scores.q4 },
+      { question_key:'q5', answer_value: String(scores.q5), score_value: scores.q5 },
+      { question_key:'q6', answer_value: q6val,             score_value: scoreMap[q6val]||3 },
+      { question_key:'q7', answer_value: q7val,             score_value: scoreMap[q7val]||3 },
+      { question_key:'q8', answer_value: q8val,             score_value: null }
+    ];
+
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Gönderiliyor...';
+
+    try {
+      await API.submitSurveyByTc(stuTcRaw, teacherId, answers);
+      fireConfetti();
+      document.getElementById('surveyForm').style.display = 'none';
+      document.getElementById('thankYou').classList.add('show');
+      window.scrollTo({ top:0, behavior:'smooth' });
+    } catch(e) {
+      showErr(e.message);
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Anketi Gönder';
+    }
+  }
+
+  function fireConfetti() {
+    const end = Date.now() + 2500;
+    const iv = setInterval(() => {
+      if (Date.now() > end) return clearInterval(iv);
+      confetti({ particleCount:50, spread:360, startVelocity:28, ticks:60, origin:{x:Math.random()*.3, y:Math.random()-.2} });
+      confetti({ particleCount:50, spread:360, startVelocity:28, ticks:60, origin:{x:.7+Math.random()*.3, y:Math.random()-.2} });
+    }, 250);
+  }
+</script>
+</body>
+</html>
