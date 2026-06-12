@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sınav Güzergah Simülasyonu - Okan Sürücü Kursları</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+  <style>
+    * { box-sizing: border-box }
+    body { font-family: 'Inter', sans-serif; background: #f4f5f7; margin: 0; padding: 0; overflow-x: hidden }
+
+    /* ── Nav ── */
+    .gz-nav { background: linear-gradient(135deg,#c41e3a,#8b0000); color:white; padding:14px 20px; display:flex; align-items:center; gap:14px; position:sticky; top:0; z-index:1000; box-shadow:0 2px 12px rgba(0,0,0,.25) }
+    .gz-nav .brand { font-size:15px; font-weight:800 }
+    .back-btn { background:rgba(255,255,255,.15); border:none; color:white; padding:7px 14px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px }
+    .back-btn:hover { background:rgba(255,255,255,.25) }
+
+    /* ── TC Screen ── */
+    .tc-screen { display:flex; align-items:center; justify-content:center; min-height:calc(100vh - 56px); padding:24px 16px }
+    .tc-box { background:white; border-radius:20px; padding:40px 32px; max-width:440px; width:100%; box-shadow:0 8px 30px rgba(0,0,0,.12); text-align:center }
+    .tc-box .tc-icon { font-size:56px; margin-bottom:16px }
+    .tc-box h2 { font-size:22px; font-weight:800; color:#222; margin-bottom:8px }
+    .tc-box p  { font-size:14px; color:#777; margin-bottom:28px }
+    .tc-input { width:100%; padding:14px 18px; border:2px solid #e0e0e0; border-radius:12px; font-size:20px; font-family:monospace; letter-spacing:3px; text-align:center; outline:none; transition:border-color .2s }
+    .tc-input:focus { border-color:#c41e3a }
+    .tc-btn { width:100%; margin-top:16px; padding:14px; background:linear-gradient(135deg,#c41e3a,#8b0000); color:white; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:transform .2s }
+    .tc-btn:hover { transform:translateY(-2px) }
+    .tc-err { margin-top:12px; background:#f8d7da; color:#721c24; padding:10px 14px; border-radius:8px; font-size:13px; display:none }
+
+    /* ── Map ── */
+    #routeMap { width:100%; height:52vh; min-height:260px; max-height:480px; position:relative; z-index:1 }
+
+    /* ── Nokta Açıklama Popup (harita üstü) ── */
+    #pointPopup {
+      position:absolute; bottom:12px; left:50%; transform:translateX(-50%) translateY(20px);
+      width:calc(100% - 32px); max-width:420px;
+      background:rgba(20,20,40,0.92); color:white;
+      border-radius:14px; padding:14px 16px;
+      box-shadow:0 6px 24px rgba(0,0,0,.55);
+      z-index:500; pointer-events:none;
+      opacity:0; transition:opacity .3s ease, transform .3s ease;
+      backdrop-filter:blur(4px);
+    }
+    #pointPopup.show {
+      opacity:1; transform:translateX(-50%) translateY(0);
+    }
+    #pointPopup .pp-header { display:flex; align-items:center; gap:10px; margin-bottom:6px }
+    #pointPopup .pp-emoji  { font-size:26px; line-height:1; flex-shrink:0 }
+    #pointPopup .pp-title  { font-size:14px; font-weight:800; flex:1 }
+    #pointPopup .pp-num    { font-size:11px; opacity:.6; font-weight:600 }
+    #pointPopup .pp-warn   { font-size:12px; color:#ff8a80; font-weight:700; margin-bottom:4px; display:none }
+    #pointPopup .pp-desc   { font-size:12px; color:rgba(255,255,255,.8); line-height:1.5; display:none }
+
+    /* ── Car SVG ── */
+    .car-svg { transform-origin:center center; display:block; filter:drop-shadow(0 3px 6px rgba(0,0,0,.5)) }
+
+    /* ── Sim Bar ── */
+    .sim-bar { background:white; border-top:3px solid #c41e3a; padding:10px 16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; box-shadow:0 -2px 12px rgba(0,0,0,.08); position:relative; z-index:2 }
+    .sim-label { flex:1; min-width:120px; font-size:13px; font-weight:600; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .sim-btn { padding:8px 14px; border:none; border-radius:20px; font-size:13px; font-weight:700; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:5px; white-space:nowrap }
+    .sim-btn:disabled { opacity:.35; cursor:not-allowed }
+    .sim-btn.green  { background:#1a7a3f; color:white }
+    .sim-btn.orange { background:#fd7e14; color:white }
+    .sim-btn.blue   { background:#0066cc; color:white }
+    .sim-btn.gray   { background:#6c757d; color:white }
+    .sim-speed { padding:8px 12px; border:2px solid #e0e0e0; border-radius:20px; font-size:12px; font-weight:600; outline:none; cursor:pointer; background:white; color:#333; font-family:'Inter',sans-serif }
+
+    /* ── Current Step Card ── */
+    .step-card { background:white; padding:16px 20px; border-bottom:1px solid #eee; display:flex; align-items:flex-start; gap:14px }
+    .sc-emoji { font-size:32px; flex-shrink:0; line-height:1 }
+    .sc-body { flex:1; min-width:0 }
+    .sc-title { font-size:15px; font-weight:700; color:#222 }
+    .sc-warn  { font-size:13px; color:#c41e3a; font-weight:600; margin-top:4px; display:none }
+    .sc-desc  { font-size:12px; color:#888; margin-top:3px; display:none }
+    .sc-num   { width:36px; height:36px; border-radius:50%; background:#c41e3a; color:white; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0 }
+
+    /* ── Progress ── */
+    .prog-wrap { padding:12px 20px; background:white; border-bottom:1px solid #eee }
+    .prog-top  { display:flex; justify-content:space-between; font-size:12px; font-weight:600; color:#777; margin-bottom:6px }
+    .prog-outer{ height:8px; background:#e0e0e0; border-radius:4px; overflow:hidden }
+    .prog-inner{ height:100%; background:linear-gradient(90deg,#c41e3a,#8b0000); border-radius:4px; transition:width .5s }
+    .prog-inner.complete { background:linear-gradient(90deg,#1a7a3f,#0d4a26) }
+
+    /* ── All Done Banner ── */
+    .all-done { background:linear-gradient(135deg,#1a7a3f,#0d4a26); color:white; padding:22px; text-align:center; display:none }
+    .all-done .adi { font-size:44px; margin-bottom:8px }
+    .all-done h3   { font-size:18px; font-weight:800; margin-bottom:4px }
+    .all-done p    { font-size:13px; opacity:.88; margin:0 }
+
+    /* ── Google Yorum CTA ── */
+    #reviewCard { display:none; padding:20px 16px 24px; background:#fffde7; border-top:4px solid #fbbc04; text-align:center }
+    #reviewCard .rv-stars { font-size:30px; letter-spacing:2px; margin-bottom:10px }
+    #reviewCard h4 { font-size:15px; font-weight:800; color:#333; margin-bottom:6px }
+    #reviewCard p  { font-size:13px; color:#666; line-height:1.6; margin-bottom:16px }
+    .rv-btn {
+      display:inline-flex; align-items:center; gap:10px;
+      background:white; color:#333;
+      padding:12px 22px; border-radius:26px;
+      font-size:14px; font-weight:700; text-decoration:none;
+      box-shadow:0 4px 16px rgba(0,0,0,.18);
+      border:1px solid #e0e0e0;
+      transition:transform .15s, box-shadow .15s;
+    }
+    .rv-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.25); color:#333 }
+    .rv-btn svg   { width:22px; height:22px; flex-shrink:0 }
+
+    /* ── Steps list ── */
+    .steps-heading { padding:14px 20px 4px; font-size:14px; font-weight:800; color:#222; background:white; border-bottom:1px solid #eee; margin-top:10px }
+    .steps-list { padding:8px 16px }
+    .step-item { display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; margin:5px 0; border:2px solid #f0f0f0; cursor:pointer; transition:all .2s }
+    .step-item:hover { border-color:#ddd }
+    .step-item.active { border-color:#c41e3a; background:#fff8f8 }
+    .step-item.done   { border-color:#1a7a3f; background:#f0fff4 }
+    .step-item.done   .si-num { background:#1a7a3f; color:white }
+    .step-item.active .si-num { background:#c41e3a; color:white }
+    .si-num   { width:26px; height:26px; border-radius:50%; background:#eee; color:#888; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0 }
+    .si-emoji { font-size:17px; flex-shrink:0 }
+    .si-body  { flex:1; min-width:0 }
+    .si-title { font-size:13px; font-weight:600; color:#333 }
+    .si-warn  { font-size:11px; color:#c41e3a; margin-top:2px }
+    .si-check { font-size:15px; color:#1a7a3f; flex-shrink:0 }
+
+    /* ── Info sections ── */
+    .info-box { background:white; margin:12px 16px 0; border-radius:12px; padding:16px; box-shadow:0 1px 8px rgba(0,0,0,.06) }
+    .info-box h5 { font-size:13px; font-weight:800; color:#c41e3a; margin-bottom:8px }
+    .info-box p  { font-size:13px; color:#555; line-height:1.7; margin:0 }
+
+    /* ── Overlay msg ── */
+    .overlay-msg { text-align:center; padding:60px 24px }
+    .overlay-msg .oi { font-size:48px; opacity:.3; display:block; margin-bottom:16px }
+    .overlay-msg h3 { font-size:18px; font-weight:700; color:#555 }
+    .overlay-msg p  { font-size:14px; color:#999 }
+
+    .bottom-pad { height:40px }
+
+    @media (max-width:480px) {
+      #routeMap { height:46vh; min-height:220px }
+      .tc-box   { padding:28px 20px }
+      .sim-btn  { padding:7px 10px; font-size:12px }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="gz-nav">
+  <a href="kursiyer.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+  <div class="brand"><i class="fas fa-route me-1"></i> Sınav Güzergah Simülasyonu</div>
+</nav>
+
+<!-- TC Giriş -->
+<div class="tc-screen" id="tcScreen">
+  <div class="tc-box">
+    <div class="tc-icon">🗺️</div>
+    <h2>Güzergah Simülasyonuna Giriş</h2>
+    <p>TC kimlik numaranızı girerek sınav güzergahınızı ve animasyonlu simülasyonu başlatın.</p>
+    <input type="tel" id="tcInput" class="tc-input" maxlength="11" placeholder="TC Kimlik No" inputmode="numeric"
+      onkeydown="if(event.key==='Enter')loadRoute()">
+    <button class="tc-btn" onclick="loadRoute()"><i class="fas fa-play-circle me-2"></i>Güzergahımı Göster</button>
+    <div class="tc-err" id="tcErr"></div>
+  </div>
+</div>
+
+<!-- Ana İçerik -->
+<div id="mainContent" style="display:none">
+
+  <div id="loadingMsg" class="overlay-msg">
+    <i class="fas fa-spinner fa-spin oi" style="color:#c41e3a;opacity:.6"></i>
+    <h3>Güzergah yükleniyor...</h3>
+  </div>
+
+  <div id="errorMsg" class="overlay-msg" style="display:none">
+    <i class="fas fa-route oi"></i>
+    <h3 id="errTitle">Güzergah Bulunamadı</h3>
+    <p id="errDesc">Size atanmış bir güzergah bulunmuyor.</p>
+  </div>
+
+  <div id="routeContent" style="display:none">
+
+    <!-- Harita -->
+    <div style="position:relative">
+      <div id="routeMap"></div>
+      <!-- Nokta açıklama popup — harita üstünde belirir -->
+      <div id="pointPopup">
+        <div class="pp-header">
+          <div class="pp-emoji" id="ppEmoji">📍</div>
+          <div class="pp-title" id="ppTitle"></div>
+          <div class="pp-num"  id="ppNum"></div>
+        </div>
+        <div class="pp-warn" id="ppWarn"></div>
+        <div class="pp-desc" id="ppDesc"></div>
+      </div>
+    </div>
+
+    <!-- Simülasyon Kontrolü -->
+    <div class="sim-bar">
+      <span class="sim-label" id="simLabel">▶ Başlat butonuna basarak simülasyonu başlatın.</span>
+      <button class="sim-btn green"  id="btnStart"   onclick="simStart()"><i class="fas fa-play"></i> Başlat</button>
+      <button class="sim-btn orange" id="btnPause"   onclick="simPause()"  style="display:none"><i class="fas fa-pause"></i> Duraklat</button>
+      <button class="sim-btn blue"   id="btnResume"  onclick="simResume()" style="display:none"><i class="fas fa-play"></i> Devam</button>
+      <button class="sim-btn gray"   id="btnRestart" onclick="simReset()"  disabled><i class="fas fa-redo"></i> Baştan</button>
+      <select class="sim-speed" id="simSpeed" onchange="simSetSpeed(this.value)">
+        <option value="slow">🐢 Yavaş</option>
+        <option value="normal" selected>🚗 Normal</option>
+        <option value="fast">⚡ Hızlı</option>
+      </select>
+    </div>
+
+    <!-- Mevcut Adım Kartı -->
+    <div class="step-card">
+      <div class="sc-emoji" id="scEmoji">🟢</div>
+      <div class="sc-body">
+        <div class="sc-title" id="scTitle">Başlangıç noktasında bekliyor</div>
+        <div class="sc-warn"  id="scWarn"></div>
+        <div class="sc-desc"  id="scDesc"></div>
+      </div>
+      <div class="sc-num" id="scNum">1</div>
+    </div>
+
+    <!-- Araç Bilgisi Rozetleri -->
+    <div id="routeBadges" style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px;background:white;border-bottom:1px solid #eee"></div>
+
+    <!-- İlerleme -->
+    <div class="prog-wrap">
+      <div class="prog-top">
+        <span><i class="fas fa-tasks me-1"></i>Tamamlanan Noktalar</span>
+        <span id="progText">0/0</span>
+      </div>
+      <div class="prog-outer"><div class="prog-inner" id="progBar" style="width:0%"></div></div>
+    </div>
+
+    <!-- Tamamlandı afişi -->
+    <div class="all-done" id="allDone">
+      <div class="adi">🏁</div>
+      <h3>Simülasyon Tamamlandı!</h3>
+      <p>Tüm güzergahı incelediğiniz için sınava hazır sayılırsınız. Başarılar!</p>
+    </div>
+
+    <!-- Google Yorum CTA — tamamlama sonrası görünür -->
+    <div id="reviewCard">
+      <div class="rv-stars">⭐⭐⭐⭐⭐</div>
+      <h4>Deneyiminizi Paylaşır mısınız?</h4>
+      <p>Okan Sürücü Kursu'ndaki eğitiminiz nasıldı?<br>Google'da birkaç cümle yazmanız bizim için çok değerli. 🙏</p>
+      <a class="rv-btn" href="https://share.google/wpkPQKDmImJOg5oXL" target="_blank" rel="noopener noreferrer">
+        <!-- Google renkli "G" logosu -->
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
+        Google'da Yorum Yap
+      </a>
+    </div>
+
+    <!-- Noktalar Listesi -->
+    <div class="steps-heading"><i class="fas fa-map-marker-alt me-2" style="color:#c41e3a"></i>Güzergah Noktaları</div>
+    <div class="steps-list" id="stepsList"></div>
+
+    <!-- Bilgi Bölümleri -->
+    <div id="infoSections"></div>
+    <div class="bottom-pad"></div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script src="/.netlify/functions/config"></script>
+<script src="js/okan-api.js"></script>
+<script>
+// ── Balıkesir merkez ──────────────────────────────────────────────────────
+const BALIKESIR   = [39.6488, 27.8834];
+const DEFAULT_ZOOM = 14;
+
+const POINT_EMOJIS = {
+  start:'🟢', end:'🔴', park_test:'🅿️', l_park:'🔷',
+  hill_start:'⛰️', emergency_brake:'🛑', attention:'⚠️', waypoint:'📍', turn:'↩️'
+};
+
+const VEHICLE_EMOJIS = {
+  car:'🚗', motorcycle:'🏍️', truck:'🚛', bus:'🚌',
+  minibus:'🚐', tractor:'🚜', bicycle:'🚲', custom:'⭐'
+};
+const VEHICLE_LABELS = {
+  car:'Otomobil', motorcycle:'Motosiklet', truck:'Kamyon', bus:'Otobüs',
+  minibus:'Minibüs', tractor:'Traktör', bicycle:'Bisiklet', custom:'Özel'
+};
+const LICENSE_LABELS = {
+  A:'A Sınıfı', A1:'A1 Sınıfı', A2:'A2 Sınıfı', B:'B Sınıfı',
+  C:'C Sınıfı', D:'D Sınıfı', E:'E Sınıfı', F:'F Sınıfı', G:'G Sınıfı',
+  BE:'BE Sınıfı', CE:'CE Sınıfı', DE:'DE Sınıfı'
+};
+
+let routeMap     = null;
+let routeData    = null;
+let completedIds = new Set();
+let currentTc    = '';
+let simulator    = null;
+
+// ── TC yükleme ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const tc = new URLSearchParams(location.search).get('tc');
+  if (tc) { document.getElementById('tcInput').value = tc; loadRoute(); }
+});
+
+async function loadRoute() {
+  const tc = document.getElementById('tcInput').value.trim();
+  if (!tc || tc.length !== 11 || !/^\d+$/.test(tc)) {
+    const el = document.getElementById('tcErr');
+    el.textContent = 'Geçerli 11 haneli TC kimlik numarası girin.';
+    el.style.display = 'block';
+    return;
+  }
+  currentTc = tc;
+  document.getElementById('tcScreen').style.display     = 'none';
+  document.getElementById('mainContent').style.display  = 'block';
+  document.getElementById('loadingMsg').style.display   = 'block';
+  document.getElementById('errorMsg').style.display     = 'none';
+  document.getElementById('routeContent').style.display = 'none';
+
+  try {
+    const data = await API.getStudentRouteByTc(tc);
+    if (!data)              { showError('Öğrenci Bulunamadı',  'Bu TC no ile kayıtlı öğrenci bulunamadı.'); return; }
+    if (!data.route)        { showError('Güzergah Atanmamış',  'Öğretmeniniz henüz size bir güzergah atamamış.'); return; }
+    if (!data.points?.length){ showError('Nokta Yok',          'Bu güzergaha henüz nokta eklenmemiş.'); return; }
+    routeData    = data;
+    completedIds = new Set(data.completed_point_ids || []);
+    renderRoute();
+  } catch(e) { showError('Hata Oluştu', e.message); }
+}
+
+function showError(title, desc) {
+  document.getElementById('loadingMsg').style.display = 'none';
+  document.getElementById('errorMsg').style.display   = 'block';
+  document.getElementById('errTitle').textContent = title;
+  document.getElementById('errDesc').textContent  = desc;
+}
+
+// ── Güzergah render ───────────────────────────────────────────────────────
+function renderRoute() {
+  document.getElementById('loadingMsg').style.display   = 'none';
+  document.getElementById('routeContent').style.display = 'block';
+  initMap(routeData.points);
+  renderRouteBadges(routeData.route);
+  updateProgress(routeData.points);
+  renderStepsList(routeData.points);
+  renderInfoSections(routeData.route);
+  updateStepCard(0);
+}
+
+function initMap(points) {
+  if (routeMap) { routeMap.remove(); routeMap = null; }
+  routeMap = L.map('routeMap').setView(BALIKESIR, DEFAULT_ZOOM);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors', maxZoom: 19
+  }).addTo(routeMap);
+
+  // Rota çizgisi
+  if (points.length > 1) {
+    L.polyline(points.map(p => [p.lat, p.lng]), {
+      color: '#c41e3a', weight: 4, opacity: .75, dashArray: '10,8'
+    }).addTo(routeMap);
+  }
+
+  // Nokta marker'ları
+  points.forEach((p, i) => {
+    const emoji = POINT_EMOJIS[p.point_type] || '📍';
+    const icon  = L.divIcon({
+      html: `<div style="font-size:22px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))">${emoji}</div>`,
+      className: '', iconAnchor: [11, 11]
+    });
+    const popup = `<b>${i+1}. ${escHtml(p.title)}</b>`
+      + (p.warning_text ? `<br><span style="color:#c41e3a;font-size:12px">⚠️ ${escHtml(p.warning_text)}</span>` : '')
+      + (p.description  ? `<br><small style="color:#888">${escHtml(p.description)}</small>` : '');
+    L.marker([p.lat, p.lng], { icon }).addTo(routeMap).bindPopup(popup);
+  });
+
+  // Tüm noktalara sığdır (Balıkesir bölgesinde olduklarından zoom değişmez çok)
+  if (points.length) {
+    routeMap.fitBounds(points.map(p => [p.lat, p.lng]), { padding: [44, 44] });
+  }
+}
+
+function updateProgress(points) {
+  const total    = points.length;
+  const done     = points.filter(p => completedIds.has(p.id)).length;
+  const pct      = total > 0 ? Math.round(done / total * 100) : 0;
+  const complete = pct === 100 && total > 0;
+  document.getElementById('progText').textContent = `${done}/${total}`;
+  const bar = document.getElementById('progBar');
+  bar.style.width = pct + '%';
+  bar.classList.toggle('complete', complete);
+  document.getElementById('allDone').style.display    = complete ? '' : 'none';
+  document.getElementById('reviewCard').style.display = complete ? '' : 'none';
+}
+
+function renderStepsList(points) {
+  const list = document.getElementById('stepsList');
+  list.innerHTML = points.map((p, i) => {
+    const done  = completedIds.has(p.id);
+    const emoji = POINT_EMOJIS[p.point_type] || '📍';
+    return `
+      <div class="step-item${done?' done':''}" id="si-${p.id}" onclick="manualMark('${p.id}',${i})">
+        <div class="si-num" id="sin-${i}">${i+1}</div>
+        <div class="si-emoji">${emoji}</div>
+        <div class="si-body">
+          <div class="si-title">${escHtml(p.title)}</div>
+          ${p.warning_text ? `<div class="si-warn">⚠️ ${escHtml(p.warning_text)}</div>` : ''}
+        </div>
+        ${done ? '<div class="si-check"><i class="fas fa-check-circle"></i></div>' : ''}
+      </div>`;
+  }).join('');
+}
+
+function updateStepCard(idx) {
+  const p = routeData?.points?.[idx];
+  if (!p) return;
+  document.getElementById('scEmoji').textContent = POINT_EMOJIS[p.point_type] || '📍';
+  document.getElementById('scNum').textContent   = idx + 1;
+  document.getElementById('scTitle').textContent = p.title;
+  const wEl = document.getElementById('scWarn');
+  const dEl = document.getElementById('scDesc');
+  wEl.textContent = p.warning_text ? '⚠️ ' + p.warning_text : '';
+  wEl.style.display = p.warning_text ? '' : 'none';
+  dEl.textContent = p.description || '';
+  dEl.style.display = p.description ? '' : 'none';
+  // Listedeki aktif stili güncelle
+  document.querySelectorAll('.step-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById(`si-${p.id}`);
+  if (el) { el.classList.add('active'); }
+}
+
+async function manualMark(pointId, idx) {
+  if (completedIds.has(pointId)) return;
+  try {
+    const res = await API.updateProgressByTc(currentTc, pointId);
+    if (res?.success === false) { showToast(res.error || 'Hata', 'error'); return; }
+    completedIds.add(pointId);
+    updateProgress(routeData.points);
+    renderStepsList(routeData.points);
+    showToast('✓ Nokta tamamlandı!');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── Nokta popup (harita üstü) ─────────────────────────────────────────────
+let _popupTimer = null;
+function showPointPopup(p, idx) {
+  const hasContent = p.warning_text || p.description;
+  const el = document.getElementById('pointPopup');
+  if (!el) return;
+
+  document.getElementById('ppEmoji').textContent = POINT_EMOJIS[p.point_type] || '📍';
+  document.getElementById('ppTitle').textContent = p.title;
+  document.getElementById('ppNum').textContent   = `${idx + 1}. nokta`;
+
+  const wEl = document.getElementById('ppWarn');
+  const dEl = document.getElementById('ppDesc');
+  wEl.textContent  = p.warning_text ? '⚠️ ' + p.warning_text : '';
+  wEl.style.display = p.warning_text ? '' : 'none';
+  dEl.textContent  = p.description || '';
+  dEl.style.display = p.description ? '' : 'none';
+
+  // Her zaman göster (içerik yoksa sadece başlık görünür)
+  clearTimeout(_popupTimer);
+  el.classList.add('show');
+  _popupTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ── Info bölümleri ────────────────────────────────────────────────────────
+function renderInfoSections(route) {
+  const secs = [
+    { key:'park_test_info',       icon:'🅿️', title:'Park Testi'                 },
+    { key:'l_park_info',          icon:'🔷', title:'L Park'                     },
+    { key:'hill_start_info',      icon:'⛰️', title:'Yokuş Kalkış'               },
+    { key:'emergency_brake_info', icon:'🛑', title:'Ani Fren'                   },
+    { key:'attention_notes',      icon:'⚠️', title:'Dikkat Edilmesi Gerekenler' },
+    { key:'common_mistakes',      icon:'❗', title:'Sık Hata Yapılan Noktalar'  },
+    { key:'preparation_tips',     icon:'💡', title:'Sınava Hazırlık İpuçları'   },
+    { key:'description',          icon:'ℹ️', title:'Genel Bilgi'               },
+  ];
+  document.getElementById('infoSections').innerHTML = secs
+    .filter(s => route[s.key])
+    .map(s => `<div class="info-box"><h5>${s.icon} ${s.title}</h5><p>${escHtml(route[s.key]).replace(/\n/g,'<br>')}</p></div>`)
+    .join('');
+}
+
+// ── Araç rozet bilgisi ────────────────────────────────────────────────────
+function renderRouteBadges(route) {
+  if (!route) return;
+  const bdg = document.getElementById('routeBadges');
+  if (!bdg) return;
+  const bs = (emoji, text, color) =>
+    `<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;background:${color}10;color:${color};border:1px solid ${color}30">${emoji} ${text}</span>`;
+  const vt  = route.vehicle_type || 'car';
+  const lc  = route.license_class;
+  const cat = route.route_category;
+  const pts = [bs(VEHICLE_EMOJIS[vt]||'🚗', VEHICLE_LABELS[vt]||vt, '#c41e3a')];
+  if (lc)  pts.push(bs('📋', LICENSE_LABELS[lc]||lc+' Sınıfı', '#0066cc'));
+  if (cat && cat !== 'vehicle') {
+    const catLabels = { motorcycle:'Motosiklet Parkuru', heavy_vehicle:'Ağır Araç Parkuru', bicycle:'Bisiklet Güzergahı', custom:'Özel Güzergah' };
+    pts.push(bs('🗺️', catLabels[cat]||cat, '#1a7a3f'));
+  }
+  bdg.innerHTML = pts.join('');
+}
+
+// ── RouteSimulator sınıfı ─────────────────────────────────────────────────
+class RouteSimulator {
+  constructor(map, points, opts = {}) {
+    this.map    = map;
+    this.points = points;
+    this.state  = 'idle';  // idle | running | paused | done
+    this.segIdx = 0;
+    this.segT   = 0;
+    this.lastTs = null;
+    this.raf    = null;
+    this.timer  = null;
+    this.SPEEDS = { slow: 9000, normal: 4000, fast: 1500 };
+    this.speed  = 'normal';
+    this.opts   = { vehicleType: 'car', iconColor: '#c41e3a', iconSize: 'medium', customIconUrl: null, ...opts };
+    this._makeCar();
+  }
+
+  _makeCar() {
+    const p0   = this.points[0];
+    const size = { small: 28, medium: 38, large: 50 }[this.opts.iconSize] || 38;
+    const half = Math.round(size / 2);
+    const PNG  = { car: 'okancar.png', motorcycle: 'okanmotor.png' };
+    const src  = PNG[this.opts.vehicleType] || 'okancar.png';
+    const html = `<img id="carEmoji" src="${src}"
+      style="width:${size}px;height:auto;display:block;transform-origin:center center;
+             filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))">`;
+    const icon = L.divIcon({ html, className: '', iconAnchor: [half, half] });
+    this.marker = L.marker([p0.lat, p0.lng], { icon, zIndexOffset: 2000 }).addTo(this.map);
+  }
+
+  _bearing(a, b) {
+    const toRad = d => d * Math.PI / 180;
+    const dLon  = toRad(b.lng - a.lng);
+    const lat1  = toRad(a.lat), lat2 = toRad(b.lat);
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  }
+
+  _rotateCar(deg) {
+    // okancar.png'nin baktığı yöne göre offset ayarlanır.
+    // Resim yukarı (kuzey) bakıyorsa offset=0, sağa bakıyorsa offset=-90
+    const el = document.getElementById('carEmoji');
+    if (el) el.style.transform = `rotate(${deg}deg)`;
+  }
+
+  start() {
+    if (this.state === 'done') this._resetState();
+    this.state  = 'running';
+    this.lastTs = performance.now();
+    this._onPoint(0);
+    this._tick();
+  }
+
+  pause() {
+    if (this.state === 'idle' || this.state === 'done') return;
+    clearTimeout(this.timer);
+    cancelAnimationFrame(this.raf);
+    this.state = 'paused';
+    _simButtons('paused');
+  }
+
+  resume() {
+    if (this.state !== 'paused') return;
+    this.state  = 'running';
+    this.lastTs = performance.now();
+    _simButtons('running');
+    this._tick();
+  }
+
+  reset() {
+    clearTimeout(this.timer);
+    cancelAnimationFrame(this.raf);
+    this._resetState();
+  }
+
+  _resetState() {
+    this.segIdx = 0; this.segT = 0; this.state = 'idle';
+    this.marker.setLatLng([this.points[0].lat, this.points[0].lng]);
+    this._rotateCar(0);
+    this.marker.closePopup();
+    document.getElementById('simLabel').textContent = '▶ Başlat butonuna basarak simülasyonu başlatın.';
+    updateStepCard(0);
+    _simButtons('idle');
+  }
+
+  setSpeed(s) { this.speed = s; }
+
+  _onPoint(idx) {
+    const p = this.points[idx];
+    updateStepCard(idx);
+    document.getElementById('simLabel').textContent = `${POINT_EMOJIS[p.point_type]||'📍'} ${idx+1}/${this.points.length} — ${p.title}`;
+
+    // Harita üstü açıklama popup
+    showPointPopup(p, idx);
+
+    // İlerlemeyi kaydet
+    if (!completedIds.has(p.id)) {
+      API.updateProgressByTc(currentTc, p.id).then(res => {
+        if (res?.success !== false) {
+          completedIds.add(p.id);
+          updateProgress(routeData.points);
+          renderStepsList(routeData.points);
+        }
+      }).catch(() => {});
+    }
+  }
+
+  _tick() {
+    if (this.state !== 'running') return;
+    const now = performance.now();
+    const dt  = now - this.lastTs;
+    this.lastTs = now;
+
+    const dur = this.SPEEDS[this.speed];
+    this.segT += dt / dur;
+
+    if (this.segT >= 1) {
+      this.segT = 0;
+      this.segIdx++;
+
+      if (this.segIdx >= this.points.length - 1) {
+        // Son noktaya ulaşıldı
+        const last = this.points[this.points.length - 1];
+        this.marker.setLatLng([last.lat, last.lng]);
+        this.state = 'done';
+        this._onPoint(this.points.length - 1);
+        document.getElementById('simLabel').textContent = '🏁 Güzergah tamamlandı! Tebrikler!';
+        _simButtons('done');
+        return;
+      }
+
+      // Ara noktaya ulaşıldı — 3.5sn bekle
+      const pt = this.points[this.segIdx];
+      this.marker.setLatLng([pt.lat, pt.lng]);
+      this.state = 'paused';
+      _simButtons('paused');
+      this._onPoint(this.segIdx);
+      this.timer = setTimeout(() => {
+        if (this.state === 'paused') {
+          this.marker.closePopup();
+          this.resume();
+        }
+      }, 1000);
+      return;
+    }
+
+    // Koordinat interpolasyonu
+    const from = this.points[this.segIdx];
+    const to   = this.points[this.segIdx + 1];
+    const lat  = from.lat + (to.lat - from.lat) * this.segT;
+    const lng  = from.lng + (to.lng - from.lng) * this.segT;
+    this.marker.setLatLng([lat, lng]);
+
+    // Araç yönünü döndür
+    const bearing = this._bearing(from, to);
+    this._rotateCar(bearing);
+
+    this.raf = requestAnimationFrame(() => this._tick());
+  }
+
+  destroy() {
+    clearTimeout(this.timer);
+    cancelAnimationFrame(this.raf);
+    if (this.marker) this.map.removeLayer(this.marker);
+  }
+}
+
+// ── Simülasyon buton yönetimi ─────────────────────────────────────────────
+function _simButtons(state) {
+  const s = document.getElementById('btnStart');
+  const p = document.getElementById('btnPause');
+  const r = document.getElementById('btnResume');
+  const t = document.getElementById('btnRestart');
+  // Başlat: idle veya done
+  s.style.display = (state === 'idle' || state === 'done') ? '' : 'none';
+  s.innerHTML     = state === 'done' ? '<i class="fas fa-redo"></i> Tekrar Başlat' : '<i class="fas fa-play"></i> Başlat';
+  // Duraklat: running
+  p.style.display = state === 'running' ? '' : 'none';
+  // Devam: paused
+  r.style.display = state === 'paused' ? '' : 'none';
+  // Baştan: aktif değilse disabled
+  t.disabled = state === 'idle';
+}
+
+function simStart() {
+  if (!simulator && routeData?.points?.length) {
+    const r = routeData.route || {};
+    simulator = new RouteSimulator(routeMap, routeData.points, {
+      vehicleType:   r.vehicle_type    || 'car',
+      iconColor:     r.icon_color      || '#c41e3a',
+      iconSize:      r.icon_size       || 'medium',
+      customIconUrl: r.custom_icon_url || null,
+    });
+  }
+  simulator?.start();
+  _simButtons('running');
+}
+function simPause()       { simulator?.pause(); }
+function simResume()      { simulator?.resume(); }
+function simReset()       { simulator?.reset(); renderStepsList(routeData?.points || []); }
+function simSetSpeed(s)   { simulator?.setSpeed(s); }
+
+// ── Yardımcılar ───────────────────────────────────────────────────────────
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${type==='error'?'#c41e3a':'#1a7a3f'};color:white;padding:12px 22px;border-radius:24px;font-size:14px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);white-space:nowrap`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+</script>
+</body>
+</html>

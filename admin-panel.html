@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/okan.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
   <style>
     .page{display:none}.page.active{display:block}
     .sidebar .nav-item.active{background:#fff0f2;color:#c41e3a;border-left-color:#c41e3a}
@@ -19,16 +20,65 @@
     .filter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
     .filter-row input,.filter-row select{padding:8px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;font-family:'Inter',sans-serif}
     .filter-row input:focus,.filter-row select:focus{border-color:#c41e3a}
+    /* ── Prim Kartları ── */
+    .bonus-summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+    @media(max-width:800px){.bonus-summary-row{grid-template-columns:1fr}}
+    .bonus-sum-card{background:white;border-radius:14px;padding:16px 20px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-left:5px solid #c41e3a;display:flex;align-items:center;gap:14px}
+    .bonus-sum-card .bsc-icon{font-size:28px;min-width:36px}
+    .bonus-sum-card .bsc-val{font-size:22px;font-weight:800;color:#222}
+    .bonus-sum-card .bsc-lbl{font-size:12px;color:#888;font-weight:500}
+    .bonus-cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    @media(max-width:1100px){.bonus-cards-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:680px){.bonus-cards-grid{grid-template-columns:1fr}}
+    .bonus-card{background:white;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.09);overflow:hidden;transition:transform .2s}
+    .bonus-card:hover{transform:translateY(-3px)}
+    .bonus-card-top{padding:16px 18px;display:flex;align-items:center;gap:12px}
+    .bonus-card-top .bc-avatar{width:44px;height:44px;border-radius:50%;background:#fff0f2;color:#c41e3a;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .bonus-card-top .bc-name{font-weight:700;font-size:15px;color:#222;flex:1}
+    .bonus-card-top .bc-period{font-size:11px;color:#999;margin-top:2px}
+    .bonus-card-top .bc-lvl-icon{font-size:30px;line-height:1}
+    .bonus-card-divider{height:1px;background:#f0f0f0;margin:0 18px}
+    .bonus-card-stats{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:14px 18px}
+    .bonus-card-stats .bcs{padding:6px 0;border-bottom:1px solid #f5f5f5}
+    .bonus-card-stats .bcs:nth-last-child(-n+2){border-bottom:none}
+    .bonus-card-stats .bcs-lbl{font-size:11px;color:#999;font-weight:500;text-transform:uppercase;letter-spacing:.3px}
+    .bonus-card-stats .bcs-val{font-size:18px;font-weight:800;color:#222;margin-top:1px}
+    .bonus-card-footer{padding:12px 18px;border-top:1px solid #f0f0f0}
+    .bonus-level-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700}
+    .blv-gold{background:#fff8e1;color:#b8860b}
+    .blv-silver{background:#f5f5f5;color:#607d8b}
+    .blv-bronze{background:#fff3e0;color:#bf6a00}
+    .blv-star{background:#e8f5e9;color:#2e7d32}
+    .blv-none{background:#f5f5f5;color:#9e9e9e}
+    /* Prim eşiği düzenleme */
+    .threshold-row{display:flex;align-items:center;gap:10px;padding:14px;background:#f8f9fa;border-radius:12px;margin-bottom:10px}
+    .threshold-row .th-icon{font-size:22px;min-width:32px;text-align:center}
+    .threshold-row .th-main{flex:1}
+    .threshold-row input{padding:7px 10px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;font-family:'Inter',sans-serif;width:100%}
+    .threshold-row input:focus{border-color:#c41e3a}
+    /* ── Araç Tipi Kartları ── */
+    .vt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+    @media(max-width:600px){.vt-grid{grid-template-columns:repeat(4,1fr)}}
+    .vt-card{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;border:2px solid #e0e0e0;border-radius:10px;cursor:pointer;transition:all .15s;background:white;gap:4px}
+    .vt-card:hover{border-color:#c41e3a;background:#fff0f2}
+    .vt-card.selected{border-color:#c41e3a;background:#fff0f2;box-shadow:0 0 0 2px #c41e3a33}
+    .vt-card .vt-emoji{font-size:22px;line-height:1}
+    .vt-card .vt-label{font-size:10px;font-weight:600;color:#555;text-align:center}
+    .vt-card.selected .vt-label{color:#c41e3a}
   </style>
 </head>
 <body>
 <nav class="okan-nav">
-  <a href="#" class="brand"><i class="fas fa-steering-wheel"></i> OKAN SÜRÜCÜ KURSLARI — YÖNETİCİ</a>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button class="btn-hamburger" onclick="toggleSidebar()" aria-label="Menü"><i class="fas fa-bars"></i></button>
+    <a href="#" class="brand"><i class="fas fa-car"></i> OKAN SÜRÜCÜ KURSLARI — YÖNETİCİ</a>
+  </div>
   <div class="nav-right">
     <div class="user-badge"><i class="fas fa-shield-alt"></i> Yönetici</div>
     <a href="#" class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Çıkış</a>
   </div>
 </nav>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
 
 <div class="app-layout">
   <div class="sidebar">
@@ -39,6 +89,15 @@
     <div class="nav-section">RAPORLAR</div>
     <div class="nav-item" onclick="sp('anketler',this)"><i class="fas fa-star"></i> Anket Sonuçları</div>
     <div class="nav-item" onclick="sp('prim',this)"><i class="fas fa-trophy"></i> Prim Hesaplama</div>
+    <div class="nav-section">RAPORLAR VE UYARILAR</div>
+    <div class="nav-item" onclick="sp('rep-nostuins',this)"><i class="fas fa-user-slash"></i> Öğrencisiz Öğrt.</div>
+    <div class="nav-item" onclick="sp('rep-noexam',this)"><i class="fas fa-file-circle-xmark"></i> Sınav Girilmemiş</div>
+    <div class="nav-item" onclick="sp('rep-nosurvey',this)"><i class="fas fa-comment-slash"></i> Anket Doldurmayan</div>
+    <div class="nav-item" onclick="sp('rep-lowscore',this)"><i class="fas fa-arrow-trend-down"></i> 60 Puan Altı</div>
+    <div class="nav-item" onclick="sp('rep-sms',this)"><i class="fas fa-sms"></i> SMS Gönderilen</div>
+    <div class="nav-section">GÜZERGAH MODÜLÜ</div>
+    <div class="nav-item" onclick="sp('guzergah',this)"><i class="fas fa-route"></i> Güzergah Yönetimi</div>
+    <div class="nav-item" onclick="sp('guzergah-progress',this)"><i class="fas fa-tasks"></i> Öğrenci İlerlemesi</div>
     <div class="nav-section">SİSTEM</div>
     <div class="nav-item" onclick="sp('eslekler',this)"><i class="fas fa-sliders-h"></i> Prim Eşikleri</div>
     <div class="nav-item" onclick="sp('auditlog',this)"><i class="fas fa-history"></i> İşlem Kayıtları</div>
@@ -128,19 +187,182 @@
 
     <!-- PRİM HESAPLAMA -->
     <div id="page-prim" class="page">
-      <div class="section-hd">
-        <h4><i class="fas fa-trophy me-2" style="color:#c41e3a"></i>Aylık Prim Hesaplama</h4>
-        <div style="display:flex;gap:10px;align-items:center">
-          <select class="form-control" id="primMonth" onchange="loadPrim()" style="width:200px;padding:8px 12px"></select>
-          <button class="btn-red" onclick="calcAllBonuses()"><i class="fas fa-calculator me-1"></i>Hesapla</button>
-          <button class="btn-red" style="padding:6px 14px;font-size:12px" onclick="exportPrim()"><i class="fas fa-download me-1"></i>CSV</button>
+      <div class="section-hd"><h4><i class="fas fa-trophy me-2" style="color:#c41e3a"></i>Dönem Bazlı Prim Hesaplama</h4></div>
+      <div class="okan-card" style="margin-bottom:18px">
+        <div class="card-body">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+            <div><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Yıl</label>
+              <select class="form-control" id="primYear" style="width:100px"></select></div>
+            <div><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Ay</label>
+              <select class="form-control" id="primMonth2" style="width:130px">
+                <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
+                <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
+                <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
+                <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
+              </select></div>
+            <div><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Dönem</label>
+              <select class="form-control" id="primPeriod" style="width:120px">
+                <option value="1">1. Dönem</option><option value="2">2. Dönem</option>
+              </select></div>
+            <button class="btn-red" onclick="generateBonusReport()"><i class="fas fa-calculator me-1"></i>Rapor Oluştur</button>
+            <button class="btn-red" style="background:linear-gradient(135deg,#1a7a3f,#0d4a26)" onclick="exportPrimReport()"><i class="fas fa-download me-1"></i>CSV İndir</button>
+          </div>
+          <div id="primReportLabel" style="margin-top:10px;font-size:13px;color:#888"></div>
         </div>
+      </div>
+
+      <!-- Özet İstatistik Kartları -->
+      <div class="bonus-summary-row" id="bonusSummaryRow" style="display:none">
+        <div class="bonus-sum-card">
+          <div class="bsc-icon">🏆</div>
+          <div>
+            <div class="bsc-val" id="bsTopScore">—</div>
+            <div class="bsc-lbl">En Yüksek Puanlı Öğretmen</div>
+          </div>
+        </div>
+        <div class="bonus-sum-card" style="border-left-color:#0066cc">
+          <div class="bsc-icon">📋</div>
+          <div>
+            <div class="bsc-val" id="bsMostSurvey">—</div>
+            <div class="bsc-lbl">En Çok Anket Alan Öğretmen</div>
+          </div>
+        </div>
+        <div class="bonus-sum-card" style="border-left-color:#1a7a3f">
+          <div class="bsc-icon">✅</div>
+          <div>
+            <div class="bsc-val" id="bsBestPass">—</div>
+            <div class="bsc-lbl">En Yüksek Geçirme Oranı</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Öğretmen Prim Kartları -->
+      <div class="bonus-cards-grid" id="bonusCardsGrid">
+        <div style="grid-column:1/-1;text-align:center;color:#999;padding:40px">
+          <i class="fas fa-calculator" style="font-size:36px;margin-bottom:10px;opacity:.3;display:block"></i>
+          Yıl, ay ve dönem seçerek rapor oluşturun.
+        </div>
+      </div>
+    </div>
+
+    <!-- A) ÖĞRENCİSİZ ÖĞRETMENLER -->
+    <div id="page-rep-nostuins" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-user-slash me-2" style="color:#c41e3a"></i>Bu Dönemde Öğrenci Girmeyen Öğretmenler</h4>
+      </div>
+      <div id="repPeriodFilter1" class="filter-row" style="margin-bottom:16px"></div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="rep-nostuins-table">
+            <thead><tr><th>Öğretmen</th><th>Telefon</th><th>Yıl</th><th>Ay</th><th>Dönem</th><th>Öğrenci Sayısı</th><th>Durum</th></tr></thead>
+            <tbody><tr><td colspan="7" class="text-center text-muted py-4">Dönem seçerek yükleyin.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- B) SINAV SONUCU GİRİLMEMİŞ -->
+    <div id="page-rep-noexam" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-file-circle-xmark me-2" style="color:#c41e3a"></i>Sınav Sonucu Girilmemiş Öğrenciler</h4>
+      </div>
+      <div id="repPeriodFilter2" class="filter-row" style="margin-bottom:16px"></div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="rep-noexam-table">
+            <thead><tr><th>Öğrenci</th><th>TC</th><th>Telefon</th><th>Öğretmen</th><th>Yıl</th><th>Ay</th><th>Dönem</th><th>Kayıt Tarihi</th></tr></thead>
+            <tbody><tr><td colspan="8" class="text-center text-muted py-4">Dönem seçerek yükleyin.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- C) ANKET DOLDURMAYAN KURSİYERLER -->
+    <div id="page-rep-nosurvey" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-comment-slash me-2" style="color:#c41e3a"></i>Anket Doldurmayan Kursiyerler</h4>
+      </div>
+      <div id="repPeriodFilter3" class="filter-row" style="margin-bottom:16px"></div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="rep-nosurvey-table">
+            <thead><tr><th>Öğrenci</th><th>TC</th><th>Telefon</th><th>Öğretmen</th><th>Sınav Sonucu</th><th>SMS</th><th>Anket</th><th>Ay</th><th>Dönem</th></tr></thead>
+            <tbody><tr><td colspan="9" class="text-center text-muted py-4">Dönem seçerek yükleyin.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- D) 60 PUAN ALTI -->
+    <div id="page-rep-lowscore" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-arrow-trend-down me-2" style="color:#c41e3a"></i>60 Puan Altı Değerlendirme Alan Öğretmenler</h4>
+      </div>
+      <div id="repPeriodFilter4" class="filter-row" style="margin-bottom:16px"></div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="rep-lowscore-table">
+            <thead><tr><th>Öğretmen</th><th>Ort. Puan (/100)</th><th>Değerlendirme Sayısı</th><th>60 Altı Puan</th><th>Ay</th><th>Dönem</th></tr></thead>
+            <tbody><tr><td colspan="6" class="text-center text-muted py-4">Dönem seçerek yükleyin.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- E) SMS GÖNDERİLEN ÖĞRENCİLER -->
+    <div id="page-rep-sms" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-sms me-2" style="color:#c41e3a"></i>SMS Gönderilen Öğrenciler</h4>
+      </div>
+      <div class="filter-row" style="margin-bottom:16px">
+        <select class="form-control" id="smsFilterStatus" onchange="loadSmsReport()" style="width:160px">
+          <option value="">Tüm Durumlar</option>
+          <option value="success">Başarılı</option>
+          <option value="failed">Başarısız</option>
+        </select>
+        <div id="repPeriodFilter5"></div>
       </div>
       <div class="okan-card">
         <div class="card-body" style="padding:0">
-          <table class="okan-table" id="prim-table">
-            <thead><tr><th>Öğretmen</th><th>Anket</th><th>Ort. Puan</th><th>Eşik</th><th>Prim</th><th>Ödendi?</th></tr></thead>
+          <table class="okan-table" id="rep-sms-table">
+            <thead><tr><th>Öğrenci</th><th>TC</th><th>Telefon</th><th>Öğretmen</th><th>Sınav</th><th>Ay</th><th>Dönem</th><th>Gönderildi?</th><th>Tarih</th><th>Durum</th><th>Cevap</th></tr></thead>
+            <tbody><tr><td colspan="11" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- GÜZERGAH YÖNETİMİ -->
+    <div id="page-guzergah" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-route me-2" style="color:#c41e3a"></i>Güzergah Yönetimi</h4>
+        <button class="btn-red" onclick="openRouteModal()"><i class="fas fa-plus me-1"></i>Yeni Güzergah</button>
+      </div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="route-table">
+            <thead><tr><th>Güzergah Adı</th><th>Şehir</th><th>Noktalar</th><th>Atanmış Öğr.</th><th>Durum</th><th>İşlem</th></tr></thead>
             <tbody><tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- GÜZERGAH ÖĞRENCİ İLERLEMESİ -->
+    <div id="page-guzergah-progress" class="page">
+      <div class="section-hd">
+        <h4><i class="fas fa-tasks me-2" style="color:#c41e3a"></i>Öğrenci Güzergah İlerlemesi</h4>
+      </div>
+      <div class="filter-row" style="margin-bottom:16px">
+        <select class="form-control" id="progressRouteFilter" onchange="loadRouteProgressTable()" style="width:260px">
+          <option value="">Tüm Güzergahlar</option>
+        </select>
+      </div>
+      <div class="okan-card">
+        <div class="card-body" style="padding:0">
+          <table class="okan-table" id="route-progress-table">
+            <thead><tr><th>Öğrenci</th><th>TC No</th><th>Öğretmen</th><th>Güzergah</th><th>İlerleme</th><th>Tamamlandı?</th><th>Atanma</th></tr></thead>
+            <tbody><tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -148,10 +370,10 @@
 
     <!-- PRİM EŞİKLERİ -->
     <div id="page-eslekler" class="page">
-      <div class="section-hd"><h4><i class="fas fa-sliders-h me-2" style="color:#c41e3a"></i>Prim Eşikleri (Yapılandırılabilir)</h4></div>
-      <div class="okan-card" style="max-width:600px">
+      <div class="section-hd"><h4><i class="fas fa-sliders-h me-2" style="color:#c41e3a"></i>Prim Kuralları (Yapılandırılabilir)</h4></div>
+      <div class="okan-card" style="max-width:680px">
         <div class="card-body">
-          <p style="font-size:14px;color:#666;margin-bottom:16px">Prim hesaplama eşiklerini buradan düzenleyebilirsiniz. Değişiklikler anında geçerli olur.</p>
+          <p style="font-size:14px;color:#666;margin-bottom:16px">Prim hesaplama eşiklerini buradan düzenleyebilirsiniz. Puanlar 100 üzerinden hesaplanır (anket ortalaması × 20). Değişiklikler anında geçerli olur.</p>
           <div id="thresholdList"><i class="fas fa-spinner fa-spin"></i></div>
         </div>
       </div>
@@ -170,6 +392,109 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- GÜZERGAH EKLE / DÜZENLE -->
+<div class="modal-overlay" id="mRoute" onclick="if(event.target===this)closeModal('mRoute')">
+  <div class="modal-box" style="max-width:780px;width:95%">
+    <div class="modal-header">
+      <span id="mRouteTitle">Güzergah Ekle</span>
+      <button class="modal-close" onclick="closeModal('mRoute')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:80vh;overflow-y:auto">
+      <input type="hidden" id="rId">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>Güzergah Adı *</label><input type="text" class="form-control" id="rName" placeholder="ör. Merkez Güzergah 1"></div>
+        <div class="form-group"><label>Şehir</label><input type="text" class="form-control" id="rCity" value="İstanbul"></div>
+        <div class="form-group"><label>Bölge / İlçe</label><input type="text" class="form-control" id="rRegion" placeholder="ör. Bağcılar"></div>
+        <div class="form-group"><label>Video Linki</label><input type="url" class="form-control" id="rVideo" placeholder="YouTube linki"></div>
+      </div>
+      <div class="form-group"><label>Genel Açıklama</label><textarea class="form-control" id="rDesc" rows="2" placeholder="Güzergah hakkında genel bilgi"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>Park Testi Bilgisi</label><textarea class="form-control" id="rPark" rows="2" placeholder="Park testi yapılacak yer ve ipuçları"></textarea></div>
+        <div class="form-group"><label>L Park Bilgisi</label><textarea class="form-control" id="rLpark" rows="2" placeholder="L park noktası ve yapılış teknikleri"></textarea></div>
+        <div class="form-group"><label>Yokuş Kalkış Bilgisi</label><textarea class="form-control" id="rHill" rows="2" placeholder="Yokuş kalkış noktası ve ipuçları"></textarea></div>
+        <div class="form-group"><label>Ani Fren Bilgisi</label><textarea class="form-control" id="rBrake" rows="2" placeholder="Ani fren noktası ve dikkat edilecekler"></textarea></div>
+        <div class="form-group"><label>Dikkat Edilmesi Gereken Kavşaklar</label><textarea class="form-control" id="rAttention" rows="2" placeholder="Tehlikeli kavşaklar ve özellikler"></textarea></div>
+        <div class="form-group"><label>En Çok Hata Yapılan Noktalar</label><textarea class="form-control" id="rMistakes" rows="2" placeholder="Kursiyerlerin sık hata yaptığı yerler"></textarea></div>
+      </div>
+      <div class="form-group"><label>Sınava Hazırlık İpuçları</label><textarea class="form-control" id="rTips" rows="2" placeholder="Genel hazırlık önerileri"></textarea></div>
+
+      <!-- Araç / Sembol Türü -->
+      <div style="background:#f8f9fa;border-radius:12px;padding:16px;margin-top:8px">
+        <strong style="font-size:14px;display:block;margin-bottom:10px"><i class="fas fa-car me-1" style="color:#c41e3a"></i>Araç / Sembol Türü</strong>
+        <div class="vt-grid" id="vtGrid"></div>
+        <input type="hidden" id="rVehicleType" value="car">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px">
+          <div class="form-group" style="margin-bottom:0">
+            <label style="font-size:12px">Ehliyet Sınıfı</label>
+            <select class="form-control" id="rLicenseClass">
+              <option value="">— Seç —</option>
+              <option value="A">A</option><option value="A1">A1</option><option value="A2">A2</option>
+              <option value="B">B</option><option value="C">C</option><option value="D">D</option>
+              <option value="E">E</option><option value="F">F</option><option value="G">G</option>
+              <option value="BE">BE</option><option value="CE">CE</option><option value="DE">DE</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label style="font-size:12px">Kategori</label>
+            <select class="form-control" id="rRouteCategory">
+              <option value="vehicle">Araç</option>
+              <option value="motorcycle">Motosiklet</option>
+              <option value="heavy_vehicle">Ağır Araç</option>
+              <option value="bicycle">Bisiklet</option>
+              <option value="custom">Özel</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label style="font-size:12px">İkon Boyutu</label>
+            <select class="form-control" id="rIconSize">
+              <option value="small">Küçük</option>
+              <option value="medium" selected>Orta</option>
+              <option value="large">Büyük</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+          <div class="form-group" style="margin-bottom:0">
+            <label style="font-size:12px">İkon Rengi</label>
+            <input type="color" class="form-control" id="rIconColor" value="#c41e3a" style="height:38px;padding:2px 4px;cursor:pointer">
+          </div>
+          <div class="form-group" style="margin-bottom:0" id="customIconGroup" style="display:none">
+            <label style="font-size:12px">Özel İkon URL</label>
+            <input type="url" class="form-control" id="rCustomIconUrl" placeholder="https://...">
+          </div>
+        </div>
+      </div>
+
+      <!-- Harita Noktaları -->
+      <div style="background:#f8f9fa;border-radius:12px;padding:16px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <strong style="font-size:14px"><i class="fas fa-map-marker-alt me-1" style="color:#c41e3a"></i>Harita Noktaları</strong>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="addPointType" class="form-control" style="width:160px;font-size:12px">
+              <option value="start">🟢 Başlangıç</option>
+              <option value="end">🔴 Bitiş</option>
+              <option value="park_test">🅿️ Park Testi</option>
+              <option value="l_park">🔷 L Park</option>
+              <option value="hill_start">⛰️ Yokuş Kalkış</option>
+              <option value="emergency_brake">🛑 Ani Fren</option>
+              <option value="attention">⚠️ Dikkat Noktası</option>
+              <option value="waypoint" selected>📍 Ara Durak</option>
+              <option value="turn">↩️ Dönüş Noktası</option>
+            </select>
+            <span style="font-size:11px;color:#888">Haritaya tıklayarak nokta ekleyin</span>
+          </div>
+        </div>
+        <div id="adminMap" style="height:320px;border-radius:10px;border:2px solid #e0e0e0;margin-bottom:12px"></div>
+        <div id="routePointsList" style="max-height:200px;overflow-y:auto"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline-red" onclick="closeModal('mRoute')">İptal</button>
+      <button class="btn-red" onclick="saveRoute()"><i class="fas fa-save me-1"></i>Kaydet</button>
+    </div>
   </div>
 </div>
 
@@ -222,36 +547,100 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 <script src="/.netlify/functions/config"></script>
-<script src="js/supabase-client.js"></script>
-<script src="js/api.js"></script>
+<script src="js/okan-api.js"></script>
 <script>
-  initSupabase();
   let allStudents  = [];
   let allTeachers  = [];
   let allSurveys   = [];
   let bonusData    = [];
 
+  const MONTHS = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
   document.addEventListener('DOMContentLoaded', async () => {
     const profile = await API.getMyProfile();
     if (!profile || profile.role !== 'admin') { location.href='index.html'; return; }
-    populateMonths('primMonth');
+    initAdminPrimSelects();
     await loadDashboard();
   });
 
+  function initAdminPrimSelects() {
+    const yearSel = document.getElementById('primYear');
+    if (!yearSel) return;
+    const now = new Date().getFullYear();
+    for (let y = now + 1; y >= now - 2; y--) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === now) o.selected = true;
+      yearSel.appendChild(o);
+    }
+    document.getElementById('primMonth2').value = String(new Date().getMonth() + 1);
+    document.getElementById('primPeriod').value = '1';
+  }
+
+  // Period filter HTML helper (inject into a container div)
+  function buildPeriodFilter(containerId, onChangeFn) {
+    const now = new Date();
+    const c = document.getElementById(containerId);
+    if (!c || c.dataset.built) return;
+    c.dataset.built = '1';
+    c.innerHTML = `
+      <select id="${containerId}-year" onchange="${onChangeFn}()" style="padding:8px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none">
+        ${[now.getFullYear()+1,now.getFullYear(),now.getFullYear()-1,now.getFullYear()-2]
+          .map(y=>`<option value="${y}"${y===now.getFullYear()?' selected':''}>${y}</option>`).join('')}
+      </select>
+      <select id="${containerId}-month" onchange="${onChangeFn}()" style="padding:8px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none">
+        ${MONTHS.slice(1).map((m,i)=>`<option value="${i+1}"${i+1===now.getMonth()+1?' selected':''}>${m}</option>`).join('')}
+      </select>
+      <select id="${containerId}-period" onchange="${onChangeFn}()" style="padding:8px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none">
+        <option value="1">1. Dönem</option>
+        <option value="2">2. Dönem</option>
+      </select>
+      <button class="btn-red" style="padding:8px 14px;font-size:13px" onclick="${onChangeFn}()"><i class="fas fa-search me-1"></i>Getir</button>`;
+  }
+
+  function getPeriodFilter(containerId) {
+    return {
+      year:   parseInt(document.getElementById(`${containerId}-year`)?.value   || new Date().getFullYear()),
+      month:  parseInt(document.getElementById(`${containerId}-month`)?.value  || new Date().getMonth()+1),
+      period: parseInt(document.getElementById(`${containerId}-period`)?.value || 1)
+    };
+  }
+
   async function doLogout() { await API.logout(); location.href='index.html'; }
+
+  function toggleSidebar() {
+    const s = document.querySelector('.sidebar');
+    const b = document.getElementById('sidebarBackdrop');
+    const opening = !s.classList.contains('open');
+    s.classList.toggle('open', opening);
+    b.classList.toggle('open', opening);
+  }
+  function closeSidebar() {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebarBackdrop').classList.remove('open');
+  }
 
   function sp(name, el) {
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.getElementById('page-'+name).classList.add('active');
     document.querySelectorAll('.sidebar .nav-item').forEach(n=>n.classList.remove('active'));
     if (el) el.classList.add('active');
-    if (name==='ogretmenler') loadInstructors();
-    if (name==='kursiyerler') loadStudents();
-    if (name==='anketler')    { populateSrvFilter(); loadSurveys(); }
-    if (name==='prim')        loadPrim();
-    if (name==='eslekler')    loadThresholds();
-    if (name==='auditlog')    loadAuditLog();
+    closeSidebar();
+    if (name==='ogretmenler')    loadInstructors();
+    if (name==='kursiyerler')    loadStudents();
+    if (name==='anketler')       { populateSrvFilter(); loadSurveys(); }
+    if (name==='prim')           { initAdminPrimSelects(); }
+    if (name==='eslekler')       loadThresholds();
+    if (name==='auditlog')       loadAuditLog();
+    if (name==='rep-nostuins')   { buildPeriodFilter('repPeriodFilter1','loadRepNoStuIns'); loadRepNoStuIns(); }
+    if (name==='rep-noexam')     { buildPeriodFilter('repPeriodFilter2','loadRepNoExam');   loadRepNoExam(); }
+    if (name==='rep-nosurvey')   { buildPeriodFilter('repPeriodFilter3','loadRepNoSurvey'); loadRepNoSurvey(); }
+    if (name==='rep-lowscore')   { buildPeriodFilter('repPeriodFilter4','loadRepLowScore'); loadRepLowScore(); }
+    if (name==='rep-sms')        { buildPeriodFilter('repPeriodFilter5','loadSmsReport');   loadSmsReport(); }
+    if (name==='guzergah')         loadRoutes();
+    if (name==='guzergah-progress') { loadProgressRouteFilter(); loadRouteProgressTable(); }
   }
 
   function openModal(id)  { document.getElementById(id).classList.add('open'); }
@@ -497,58 +886,186 @@
   }
 
   // ── PRİM ─────────────────────────────────────────────
-  async function loadPrim() {
-    const month = document.getElementById('primMonth').value;
-    const tbody = document.querySelector('#prim-table tbody');
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+  let lastBonusReports = [];
+
+  function bonusLevelClass(amount) {
+    if (amount >= 5000) return 'blv-gold';
+    if (amount >= 3000) return 'blv-silver';
+    if (amount >= 2000) return 'blv-bronze';
+    if (amount >= 1000) return 'blv-star';
+    return 'blv-none';
+  }
+
+  async function generateBonusReport() {
+    const year   = parseInt(document.getElementById('primYear').value);
+    const month  = parseInt(document.getElementById('primMonth2').value);
+    const period = parseInt(document.getElementById('primPeriod').value);
+    const grid   = document.getElementById('bonusCardsGrid');
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999"><i class="fas fa-spinner fa-spin" style="font-size:24px"></i><div style="margin-top:10px">Hesaplanıyor...</div></div>';
+    document.getElementById('bonusSummaryRow').style.display = 'none';
+    document.getElementById('primReportLabel').textContent =
+      `${year} / ${MONTHS[month]} / ${period}. Dönem raporu oluşturuluyor...`;
     try {
-      const bonuses = await API.getBonuses(month);
-      bonusData = bonuses;
-      tbody.innerHTML = bonuses.map(b => {
-        const ins = b.teachers;
-        const init = ins?ins.first_name.charAt(0)+ins.last_name.charAt(0):'?';
-        return `<tr>
-          <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar-circle">${init}</div>
-            <strong>${ins?ins.first_name+' '+ins.last_name:'-'}</strong></div></td>
-          <td>${b.survey_count}</td>
-          <td>${b.avg_score!=null?b.avg_score+'/5':'-'}</td>
-          <td>${b.threshold_label||'Prim Yok'}</td>
-          <td>${primBadge(b.bonus_amount)}</td>
-          <td>${b.is_paid?'<span class="badge badge-green">Ödendi ✓</span>':
-            `<button class="btn-outline-red" style="padding:4px 10px;font-size:12px" onclick="markPaid('${b.id}')">Öde</button>`}</td>
-        </tr>`;
-      }).join('') || '<tr><td colspan="6" class="text-center text-muted py-4">Bu ay için prim kaydı yok. "Hesapla" butonuna basın.</td></tr>';
-    } catch(e) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`; }
+      const reports = await API.generateBonusReport({ year, month, period });
+      lastBonusReports = reports;
+      renderBonusCards(reports, year, month, period);
+      document.getElementById('primReportLabel').innerHTML =
+        `<i class="fas fa-check-circle" style="color:#28a745"></i> ${year} / ${MONTHS[month]} / ${period}. Dönem — ${reports.length} öğretmen`;
+    } catch(e) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#c41e3a"><i class="fas fa-exclamation-triangle me-2"></i>${e.message}</div>`;
+    }
   }
 
-  async function calcAllBonuses() {
-    const month = document.getElementById('primMonth').value;
-    try {
-      showToast('Hesaplanıyor...');
-      await Promise.all(allTeachers.map(t => API.calculateBonus(t.id, month)));
-      showToast('Tüm primler hesaplandı!');
-      loadPrim();
-    } catch(e) { showToast(e.message,'error'); }
+  function renderBonusCards(reports, year, month, period) {
+    const grid = document.getElementById('bonusCardsGrid');
+    if (!reports || reports.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#999;padding:40px">Bu dönemde öğretmen kaydı bulunamadı.</div>';
+      document.getElementById('bonusSummaryRow').style.display = 'none';
+      return;
+    }
+
+    // Özet istatistikler
+    const withScore = reports.filter(r => r.score_100 != null);
+    const topScorer = withScore.length ? withScore.reduce((a,b) => (b.score_100||0) > (a.score_100||0) ? b : a) : null;
+    const mostSurvey = reports.reduce((a,b) => (b.survey_completed_count||0) > (a.survey_completed_count||0) ? b : a);
+    const withExams  = reports.filter(r => r.exam_entered_count > 0);
+    const bestPass   = withExams.length ? withExams.reduce((a,b) => {
+      const rateA = a.passed_count / (a.exam_entered_count||1);
+      const rateB = b.passed_count / (b.exam_entered_count||1);
+      return rateB > rateA ? b : a;
+    }) : null;
+
+    const tName = r => { const t = r.teacher||r.teachers||{}; return `${t.first_name||''} ${t.last_name||''}`.trim(); };
+    document.getElementById('bsTopScore').textContent   = topScorer  ? `${tName(topScorer)} (${topScorer.score_100}/100)`  : '—';
+    document.getElementById('bsMostSurvey').textContent = mostSurvey ? `${tName(mostSurvey)} (${mostSurvey.survey_completed_count} anket)` : '—';
+    document.getElementById('bsBestPass').textContent   = bestPass   ? `${tName(bestPass)} (%${Math.round(bestPass.passed_count/(bestPass.exam_entered_count||1)*100)})` : '—';
+    document.getElementById('bonusSummaryRow').style.display = 'grid';
+
+    // Öğretmen kartları
+    const periodLabel = `${year} / ${MONTHS[month]} / ${period}. Dönem`;
+    grid.innerHTML = reports.map(r => {
+      const t    = r.teacher || r.teachers || {};
+      const init = (t.first_name?.[0]||'?') + (t.last_name?.[0]||'');
+      const icon = r.reward_icon || (r.bonus_amount >= 5000 ? '🏆' : r.bonus_amount >= 3000 ? '🥈' : r.bonus_amount >= 2000 ? '🥉' : r.bonus_amount >= 1000 ? '⭐' : '❌');
+      const title= r.reward_title || r.bonus_label || 'Prim Yok';
+      const range= r.score_range_label || '';
+      const cls  = bonusLevelClass(r.bonus_amount);
+      const score= r.score_100 != null ? `${r.score_100}/100` : '—';
+      const passRate = r.exam_entered_count > 0
+        ? Math.round(r.passed_count / r.exam_entered_count * 100) + '%'
+        : '—';
+      const bonusStr = r.bonus_amount > 0
+        ? r.bonus_amount.toLocaleString('tr-TR') + ' ₺'
+        : 'Prim Yok';
+
+      return `
+      <div class="bonus-card">
+        <div class="bonus-card-top">
+          <div class="bc-avatar">${init}</div>
+          <div style="flex:1">
+            <div class="bc-name">${t.first_name||''} ${t.last_name||''}</div>
+            <div class="bc-period">${periodLabel}</div>
+          </div>
+          <div class="bc-lvl-icon">${icon}</div>
+        </div>
+        <div class="bonus-card-divider"></div>
+        <div class="bonus-card-stats">
+          <div class="bcs">
+            <div class="bcs-lbl">Ort. Puan</div>
+            <div class="bcs-val" style="font-size:22px;color:${r.bonus_amount>0?'#c41e3a':'#999'}">${score}</div>
+          </div>
+          <div class="bcs">
+            <div class="bcs-lbl">Prim Tutarı</div>
+            <div class="bcs-val" style="font-size:${r.bonus_amount>0?'18':'14'}px;color:${r.bonus_amount>0?'#1a7a3f':'#999'}">${bonusStr}</div>
+          </div>
+          <div class="bcs">
+            <div class="bcs-lbl">Öğrenci</div>
+            <div class="bcs-val">${r.total_students}</div>
+          </div>
+          <div class="bcs">
+            <div class="bcs-lbl">Anket</div>
+            <div class="bcs-val">${r.survey_completed_count}</div>
+          </div>
+          <div class="bcs">
+            <div class="bcs-lbl">Geçirme Oranı</div>
+            <div class="bcs-val">${passRate}</div>
+          </div>
+          <div class="bcs">
+            <div class="bcs-lbl">60↓ Puan</div>
+            <div class="bcs-val" style="color:${r.low_score_count>0?'#c41e3a':'#1a7a3f'}">${r.low_score_count||0}</div>
+          </div>
+        </div>
+        <div class="bonus-card-footer">
+          <div class="bonus-level-badge ${cls}">${icon} ${title}</div>
+          ${range ? `<div style="font-size:11px;color:#aaa;margin-top:6px">${range}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
   }
 
-  async function markPaid(bonusId) {
-    try { await API.markBonusPaid(bonusId); showToast('Ödendi olarak işaretlendi!'); loadPrim(); }
-    catch(e) { showToast(e.message,'error'); }
+  function exportPrimReport() {
+    const year   = document.getElementById('primYear')?.value   || '-';
+    const month  = document.getElementById('primMonth2')?.value || '-';
+    const period = document.getElementById('primPeriod')?.value || '-';
+    const rows = [['Öğretmen','Toplam Öğr.','Sınav Gir.','Geçen','Kalan','Geçirme %','Anket','Ort. Puan (/100)','60↓ Puan','Prim Hakkı','Prim (₺)','Prim Seviyesi','Puan Aralığı']];
+    lastBonusReports.forEach(r => {
+      const t = r.teacher || r.teachers || {};
+      const passRate = r.exam_entered_count > 0 ? Math.round(r.passed_count / r.exam_entered_count * 100) : 0;
+      rows.push([
+        `${t.first_name||''} ${t.last_name||''}`.trim(),
+        r.total_students, r.exam_entered_count,
+        r.passed_count, r.failed_count, passRate + '%',
+        r.survey_completed_count,
+        r.score_100 != null ? r.score_100 : '-',
+        r.low_score_count,
+        r.bonus_eligible ? 'Evet' : 'Hayır',
+        r.bonus_amount,
+        r.reward_title || r.bonus_label || '-',
+        r.score_range_label || '-'
+      ]);
+    });
+    exportCsv(rows, `okan-prim-${year}-${MONTHS[parseInt(month)]}-donem${period}.csv`);
   }
 
-  // ── PRİM EŞİKLERİ ───────────────────────────────────
+  // ── PRİM KURALLARI ───────────────────────────────────
   async function loadThresholds() {
     const box = document.getElementById('thresholdList');
     try {
-      const thresholds = await API.getThresholds();
-      box.innerHTML = thresholds.map(t => `
-        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#f8f9fa;border-radius:10px;margin-bottom:10px">
-          <input style="flex:1;padding:7px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px" value="${t.label}" id="tl-${t.id}" placeholder="Etiket">
-          <input type="number" style="width:80px;padding:7px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px" value="${t.min_score}" id="tmin-${t.id}" step="0.1">
-          <span style="color:#888">–</span>
-          <input type="number" style="width:80px;padding:7px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px" value="${t.max_score}" id="tmax-${t.id}" step="0.1">
-          <input type="number" style="width:100px;padding:7px;border:2px solid #e0e0e0;border-radius:8px;font-size:13px" value="${t.bonus_amount}" id="tamt-${t.id}">
-          <button class="btn-red" style="padding:6px 12px;font-size:12px" onclick="saveThreshold('${t.id}')"><i class="fas fa-save"></i></button>
+      const rules = await API.getThresholds();
+      box.innerHTML = rules.map(t => `
+        <div class="threshold-row">
+          <div class="th-icon">${t.reward_icon || '—'}</div>
+          <div class="th-main">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <div>
+                <label style="font-size:11px;color:#888;font-weight:600;display:block;margin-bottom:3px">Kural Adı</label>
+                <input value="${t.label||''}" id="tl-${t.id}" placeholder="Kural adı">
+              </div>
+              <div>
+                <label style="font-size:11px;color:#888;font-weight:600;display:block;margin-bottom:3px">Prim Başlığı</label>
+                <input value="${t.reward_title||''}" id="tt-${t.id}" placeholder="Prim başlığı">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:80px 80px 1fr 100px;gap:8px;align-items:center">
+              <div>
+                <label style="font-size:11px;color:#888;font-weight:600;display:block;margin-bottom:3px">Min Puan</label>
+                <input type="number" value="${t.min_score}" id="tmin-${t.id}" step="1" min="0" max="100">
+              </div>
+              <div>
+                <label style="font-size:11px;color:#888;font-weight:600;display:block;margin-bottom:3px">Max Puan</label>
+                <input type="number" value="${t.max_score}" id="tmax-${t.id}" step="1" min="0" max="100">
+              </div>
+              <div>
+                <label style="font-size:11px;color:#888;font-weight:600;display:block;margin-bottom:3px">Puan Aralığı Etiketi</label>
+                <input value="${t.score_range_label||''}" id="trl-${t.id}" placeholder="ör. 90 – 100 Puan">
+              </div>
+              <div>
+                <label style="font-size:11px;color:#888;font-weight:600;display:block;margin-bottom:3px">Prim Tutarı (₺)</label>
+                <input type="number" value="${t.bonus_amount}" id="tamt-${t.id}" step="100" min="0">
+              </div>
+            </div>
+          </div>
+          <button class="btn-red" style="padding:8px 14px;font-size:12px;flex-shrink:0;align-self:flex-end" onclick="saveThreshold('${t.id}')"><i class="fas fa-save me-1"></i>Kaydet</button>
         </div>`).join('');
     } catch(e) { box.innerHTML = `<p class="text-danger">${e.message}</p>`; }
   }
@@ -556,12 +1073,14 @@
   async function saveThreshold(id) {
     try {
       await API.updateThreshold(id, {
-        label:        document.getElementById(`tl-${id}`).value,
-        min_score:    +document.getElementById(`tmin-${id}`).value,
-        max_score:    +document.getElementById(`tmax-${id}`).value,
-        bonus_amount: +document.getElementById(`tamt-${id}`).value
+        label:             document.getElementById(`tl-${id}`).value,
+        reward_title:      document.getElementById(`tt-${id}`).value,
+        min_score:         +document.getElementById(`tmin-${id}`).value,
+        max_score:         +document.getElementById(`tmax-${id}`).value,
+        score_range_label: document.getElementById(`trl-${id}`).value,
+        bonus_amount:      +document.getElementById(`tamt-${id}`).value
       });
-      showToast('Eşik güncellendi!');
+      showToast('Prim kuralı güncellendi!');
     } catch(e) { showToast(e.message,'error'); }
   }
 
@@ -608,13 +1127,412 @@
     exportCsv(rows, `okan-anketler-${currentMonth()}.csv`);
   }
 
-  function exportPrim() {
-    const rows = [['Öğretmen','Sicil No','Anket','Ort Puan','Eşik','Prim (TL)','Ödendi']];
-    bonusData.forEach(b => {
-      const ins = b.teachers;
-      rows.push([ins?ins.first_name+' '+ins.last_name:'-', ins?.sicil_no||'-', b.survey_count, b.avg_score||0, b.threshold_label||'-', b.bonus_amount, b.is_paid?'Evet':'Hayır']);
+  // ── RAPORLAR VE UYARILAR ─────────────────────────────
+  async function loadRepNoStuIns() {
+    const { year, month, period } = getPeriodFilter('repPeriodFilter1');
+    const tbody = document.querySelector('#rep-nostuins-table tbody');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const list = await API.getTeachersWithoutStudents({ year, month, period });
+      tbody.innerHTML = list.map(t => `<tr>
+        <td><strong>${t.first_name} ${t.last_name}</strong></td>
+        <td>${t.phone||'-'}</td>
+        <td>${year}</td>
+        <td>${MONTHS[month]}</td>
+        <td>${period}. Dönem</td>
+        <td>0</td>
+        <td><span class="badge badge-orange">Eksik</span></td>
+      </tr>`).join('') || '<tr><td colspan="7" class="text-center text-muted py-4">Bu dönemde tüm öğretmenler öğrenci girmiş.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  async function loadRepNoExam() {
+    const { year, month, period } = getPeriodFilter('repPeriodFilter2');
+    const tbody = document.querySelector('#rep-noexam-table tbody');
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const list = await API.getStudentsWithoutExam({ year, month, period });
+      tbody.innerHTML = list.map(s => `<tr>
+        <td><strong>${s.first_name} ${s.last_name}</strong></td>
+        <td>${maskTc(s.tc_no)}</td>
+        <td>${s.phone||'-'}</td>
+        <td>${s.teachers?s.teachers.first_name+' '+s.teachers.last_name:'-'}</td>
+        <td>${s.record_year||'-'}</td>
+        <td>${MONTHS[s.record_month]||'-'}</td>
+        <td>${s.record_period ? s.record_period+'. Dönem' : '-'}</td>
+        <td>${fmtDate(s.created_at)}</td>
+      </tr>`).join('') || '<tr><td colspan="8" class="text-center text-muted py-4">Bu dönemde sınav girilmemiş öğrenci yok.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  async function loadRepNoSurvey() {
+    const { year, month, period } = getPeriodFilter('repPeriodFilter3');
+    const tbody = document.querySelector('#rep-nosurvey-table tbody');
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const list = await API.getStudentsWithoutSurvey({ year, month, period });
+      tbody.innerHTML = list.map(s => {
+        const lastExam = (s.exams||[]).filter(e=>!e.is_deleted).sort((a,b)=>new Date(b.exam_date)-new Date(a.exam_date))[0];
+        const smsSent  = (s.student_sms_status||[]).some(x=>x.sms_sent);
+        return `<tr>
+          <td><strong>${s.first_name} ${s.last_name}</strong></td>
+          <td>${maskTc(s.tc_no)}</td>
+          <td>${s.phone||'-'}</td>
+          <td>${s.teachers?s.teachers.first_name+' '+s.teachers.last_name:'-'}</td>
+          <td>${lastExam?examBadge(lastExam.result):'<span class="badge badge-gray">Girilmemiş</span>'}</td>
+          <td>${smsSent?'<span class="badge badge-green">Gönderildi</span>':'<span class="badge badge-gray">Gönderilmedi</span>'}</td>
+          <td><span class="badge badge-orange">Bekliyor</span></td>
+          <td>${MONTHS[s.record_month]||'-'}</td>
+          <td>${s.record_period?s.record_period+'. Dönem':'-'}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="9" class="text-center text-muted py-4">Bu dönemde anketi doldurmayan kursiyer yok.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  async function loadRepLowScore() {
+    const { year, month, period } = getPeriodFilter('repPeriodFilter4');
+    const tbody = document.querySelector('#rep-lowscore-table tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const list = await API.getLowScoreTeachers({ year, month, period });
+      tbody.innerHTML = list.map(r => `<tr>
+        <td><strong>${r.teacher?r.teacher.first_name+' '+r.teacher.last_name:'-'}</strong></td>
+        <td><span style="color:#c41e3a;font-weight:700">${r.avg}/100</span></td>
+        <td>${r.count}</td>
+        <td><span class="badge badge-red">${r.low_count}</span></td>
+        <td>${MONTHS[month]}</td>
+        <td>${period}. Dönem</td>
+      </tr>`).join('') || '<tr><td colspan="6" class="text-center text-muted py-4">Bu dönemde 60 puan altı değerlendirme yok.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  async function loadSmsReport() {
+    const status = document.getElementById('smsFilterStatus')?.value || '';
+    const { year, month, period } = getPeriodFilter('repPeriodFilter5');
+    const tbody = document.querySelector('#rep-sms-table tbody');
+    tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const list = await API.getSmsStatusList({ year, month, period, status: status || null });
+      tbody.innerHTML = list.map(r => {
+        const s  = r.students || {};
+        const ex = r.exams    || {};
+        const t  = s.teachers || {};
+        return `<tr>
+          <td><strong>${s.first_name||''} ${s.last_name||''}</strong></td>
+          <td>${maskTc(s.tc_no||'')}</td>
+          <td>${r.phone||'-'}</td>
+          <td>${t.first_name?t.first_name+' '+t.last_name:'-'}</td>
+          <td>${ex.result?examBadge(ex.result):'-'}</td>
+          <td>${MONTHS[s.record_month]||'-'}</td>
+          <td>${s.record_period?s.record_period+'. Dönem':'-'}</td>
+          <td>${r.sms_sent?'<span class="badge badge-green">Gönderildi</span>':'<span class="badge badge-gray">Gönderilmedi</span>'}</td>
+          <td>${r.sms_sent_at?fmtDateTime(r.sms_sent_at):'-'}</td>
+          <td>${r.status==='success'?'<span class="badge badge-green">Başarılı</span>':r.status==='failed'?'<span class="badge badge-red">Başarısız</span>':'<span class="badge badge-gray">Bekliyor</span>'}</td>
+          <td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.provider_response||'-'}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="11" class="text-center text-muted py-4">SMS kaydı bulunamadı.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="11" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  // ── GÜZERGAH YÖNETİMİ ────────────────────────────────
+  let adminMap = null;
+  let routeMapPoints = [];
+  let editingRouteId = null;
+
+  const POINT_EMOJIS = {
+    start:'🟢', end:'🔴', park_test:'🅿️', l_park:'🔷',
+    hill_start:'⛰️', emergency_brake:'🛑', attention:'⚠️', waypoint:'📍', turn:'↩️'
+  };
+  const POINT_LABELS = {
+    start:'Başlangıç', end:'Bitiş', park_test:'Park Testi', l_park:'L Park',
+    hill_start:'Yokuş Kalkış', emergency_brake:'Ani Fren',
+    attention:'Dikkat', waypoint:'Ara Durak', turn:'Dönüş'
+  };
+
+  const VEHICLE_DEFS = [
+    { type:'car',        emoji:'🚗', label:'Otomobil'   },
+    { type:'motorcycle', emoji:'🏍️', label:'Motosiklet' },
+    { type:'truck',      emoji:'🚛', label:'Kamyon'     },
+    { type:'bus',        emoji:'🚌', label:'Otobüs'     },
+    { type:'minibus',    emoji:'🚐', label:'Minibüs'    },
+    { type:'tractor',    emoji:'🚜', label:'Traktör'    },
+    { type:'bicycle',    emoji:'🚲', label:'Bisiklet'   },
+    { type:'custom',     emoji:'⭐', label:'Özel'       },
+  ];
+
+  function renderVehicleGrid(selected) {
+    document.getElementById('vtGrid').innerHTML = VEHICLE_DEFS.map(v => `
+      <div class="vt-card${v.type===selected?' selected':''}" onclick="selectVehicleType('${v.type}')">
+        <div class="vt-emoji">${v.emoji}</div>
+        <div class="vt-label">${v.label}</div>
+      </div>`).join('');
+    const customGroup = document.getElementById('customIconGroup');
+    if (customGroup) customGroup.style.display = selected === 'custom' ? '' : 'none';
+  }
+
+  function selectVehicleType(type) {
+    document.getElementById('rVehicleType').value = type;
+    renderVehicleGrid(type);
+  }
+
+  async function loadRoutes() {
+    const tbody = document.querySelector('#route-table tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const routes = await API.getRoutes({ includeInactive: true });
+      tbody.innerHTML = routes.map(r => `<tr>
+        <td><strong>${r.name}</strong>${r.region?`<div style="font-size:11px;color:#888">${r.region}</div>`:''}</td>
+        <td>${r.city||'-'}</td>
+        <td><span class="badge badge-blue">${r.point_count||0} nokta</span></td>
+        <td>${r.student_count||0}</td>
+        <td>${r.is_active?'<span class="badge badge-green">Aktif</span>':'<span class="badge badge-gray">Pasif</span>'}</td>
+        <td><div style="display:flex;gap:5px">
+          <button class="btn-outline-red" style="padding:5px 10px;font-size:12px" onclick="openRouteModal('${r.id}')"><i class="fas fa-edit"></i></button>
+          <button style="padding:5px 10px;font-size:12px;background:${r.is_active?'#fd7e14':'#1a7a3f'};color:white;border:none;border-radius:8px;cursor:pointer"
+            onclick="toggleRoute('${r.id}',${r.is_active})">
+            <i class="fas fa-${r.is_active?'pause':'play'}"></i>
+          </button>
+        </div></td>
+      </tr>`).join('') || '<tr><td colspan="6" class="text-center text-muted py-4">Güzergah eklenmemiş.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  function openRouteModal(id = null) {
+    editingRouteId = id || null;
+    routeMapPoints = [];
+    document.getElementById('rId').value = id || '';
+    document.getElementById('mRouteTitle').textContent = id ? 'Güzergah Düzenle' : 'Güzergah Ekle';
+    ['rName','rRegion','rVideo','rDesc','rPark','rLpark','rHill','rBrake','rAttention','rMistakes','rTips','rCustomIconUrl'].forEach(fid => {
+      const el = document.getElementById(fid); if (el) el.value = '';
     });
-    exportCsv(rows, `okan-prim-${document.getElementById('primMonth').value}.csv`);
+    document.getElementById('rCity').value = 'İstanbul';
+    document.getElementById('rVehicleType').value = 'car';
+    document.getElementById('rLicenseClass').value = '';
+    document.getElementById('rRouteCategory').value = 'vehicle';
+    document.getElementById('rIconColor').value = '#c41e3a';
+    document.getElementById('rIconSize').value = 'medium';
+    document.getElementById('routePointsList').innerHTML = '';
+    renderVehicleGrid('car');
+    openModal('mRoute');
+    setTimeout(() => {
+      initAdminMap();
+      if (id) loadRouteForEdit(id);
+    }, 200);
+  }
+
+  async function loadRouteForEdit(id) {
+    try {
+      const r = await API.getRoute(id);
+      if (!r) return;
+      document.getElementById('rName').value      = r.name || '';
+      document.getElementById('rCity').value      = r.city || 'İstanbul';
+      document.getElementById('rRegion').value    = r.region || '';
+      document.getElementById('rVideo').value     = r.video_link || '';
+      document.getElementById('rDesc').value      = r.description || '';
+      document.getElementById('rPark').value      = r.park_test_info || '';
+      document.getElementById('rLpark').value     = r.l_park_info || '';
+      document.getElementById('rHill').value      = r.hill_start_info || '';
+      document.getElementById('rBrake').value     = r.emergency_brake_info || '';
+      document.getElementById('rAttention').value = r.attention_notes || '';
+      document.getElementById('rMistakes').value  = r.common_mistakes || '';
+      document.getElementById('rTips').value      = r.preparation_tips || '';
+      const vt = r.vehicle_type || 'car';
+      document.getElementById('rVehicleType').value    = vt;
+      document.getElementById('rLicenseClass').value   = r.license_class || '';
+      document.getElementById('rRouteCategory').value  = r.route_category || 'vehicle';
+      document.getElementById('rIconColor').value      = r.icon_color || '#c41e3a';
+      document.getElementById('rIconSize').value       = r.icon_size || 'medium';
+      document.getElementById('rCustomIconUrl').value  = r.custom_icon_url || '';
+      renderVehicleGrid(vt);
+      if (r.route_points?.length) {
+        r.route_points.forEach(p => addMapPoint(p.lat, p.lng, p.point_type, p.title, p.description||'', p.id, p.warning_text||''));
+      }
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+
+  function initAdminMap() {
+    const mapEl = document.getElementById('adminMap');
+    if (!mapEl) return;
+    if (adminMap) { adminMap.remove(); adminMap = null; }
+    adminMap = L.map('adminMap').setView([39.6488, 27.8834], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors', maxZoom: 19
+    }).addTo(adminMap);
+    adminMap.on('click', e => {
+      const type  = document.getElementById('addPointType').value;
+      const label = POINT_LABELS[type] || type;
+      addMapPoint(e.latlng.lat, e.latlng.lng, type, POINT_EMOJIS[type]+' '+label, '');
+    });
+    setTimeout(() => adminMap.invalidateSize(), 100);
+  }
+
+  function addMapPoint(lat, lng, type, title, description, existingId, warningText) {
+    const emoji = POINT_EMOJIS[type] || '📍';
+    const icon  = L.divIcon({ html:`<div style="font-size:24px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))">${emoji}</div>`, className:'', iconAnchor:[12,12] });
+    const marker = L.marker([lat, lng], { icon, draggable: true }).addTo(adminMap);
+    routeMapPoints.push({ lat, lng, type, title, description, warning_text: warningText||'', marker, id: existingId||null });
+    marker.on('dragend', e => {
+      const ll  = e.target.getLatLng();
+      const cur = routeMapPoints.findIndex(p => p.marker === e.target);
+      if (cur !== -1) { routeMapPoints[cur].lat = ll.lat; routeMapPoints[cur].lng = ll.lng; }
+    });
+    marker.on('popupopen', () => {
+      const cur = routeMapPoints.findIndex(p => p.marker === marker);
+      if (cur === -1) return;
+      const pt  = routeMapPoints[cur];
+      marker.getPopup().setContent(
+        `<div style="min-width:180px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:6px">${POINT_EMOJIS[pt.type]||'📍'} ${escHtml(pt.title)}</div>
+          <div style="font-size:11px;color:#888;margin-bottom:8px">Sıra: <b>${cur+1} / ${routeMapPoints.length}</b></div>
+          <button onclick="removeMapPoint(${cur});this.closest('.leaflet-popup').querySelector('.leaflet-popup-close-button').click()"
+            style="width:100%;padding:6px 10px;background:#dc3545;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
+            🗑️ Noktayı Sil
+          </button>
+        </div>`
+      );
+    });
+    marker.bindPopup('', { minWidth: 180 });
+    renderRoutePointsList();
+  }
+
+  function removeMapPoint(idx) {
+    const pt = routeMapPoints[idx];
+    if (pt?.marker) adminMap.removeLayer(pt.marker);
+    routeMapPoints.splice(idx, 1);
+    renderRoutePointsList();
+  }
+
+  function renderRoutePointsList() {
+    const list = document.getElementById('routePointsList');
+    if (!routeMapPoints.length) {
+      list.innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:12px 0">Haritaya tıklayarak nokta ekleyin.</p>';
+      return;
+    }
+    list.innerHTML = routeMapPoints.map((p,i) => `
+      <div style="background:white;border-radius:10px;margin-bottom:8px;border:1px solid #e0e0e0;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #f0f0f0">
+          <span style="font-size:18px">${POINT_EMOJIS[p.type]||'📍'}</span>
+          <input value="${escHtml(p.title)}" style="flex:1;font-size:13px;font-weight:600;border:none;outline:none;background:transparent"
+            oninput="routeMapPoints[${i}].title=this.value">
+          <span style="font-size:11px;color:#bbb;flex-shrink:0;font-weight:700">${i+1}</span>
+          <button onclick="removeMapPoint(${i})" style="border:none;background:none;color:#dc3545;cursor:pointer;font-size:14px;flex-shrink:0;padding:0 2px"><i class="fas fa-times"></i></button>
+        </div>
+        <div style="padding:8px 10px;display:flex;flex-direction:column;gap:6px">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">📋 Açıklama (simülasyonda görünür)</div>
+            <input value="${escHtml(p.description||'')}" style="width:100%;font-size:12px;color:#555;border:1px solid #ddd;border-radius:6px;padding:5px 8px;outline:none;box-sizing:border-box"
+              placeholder="Nokta hakkında kısa açıklama..." oninput="routeMapPoints[${i}].description=this.value">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:#c41e3a;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">⚠️ Uyarı Metni (simülasyonda kırmızı görünür)</div>
+            <input value="${escHtml(p.warning_text||'')}" style="width:100%;font-size:12px;color:#c41e3a;border:1px solid #f5c0c0;border-radius:6px;padding:5px 8px;outline:none;box-sizing:border-box"
+              placeholder="Dikkat edilmesi gereken uyarı..." oninput="routeMapPoints[${i}].warning_text=this.value">
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+  async function saveRoute() {
+    const name = document.getElementById('rName').value.trim();
+    if (!name) { showToast('Güzergah adı zorunlu.', 'error'); return; }
+    const formData = {
+      name,
+      city:                 document.getElementById('rCity').value.trim() || 'İstanbul',
+      region:               document.getElementById('rRegion').value.trim() || null,
+      video_link:           document.getElementById('rVideo').value.trim() || null,
+      description:          document.getElementById('rDesc').value.trim() || null,
+      park_test_info:       document.getElementById('rPark').value.trim() || null,
+      l_park_info:          document.getElementById('rLpark').value.trim() || null,
+      hill_start_info:      document.getElementById('rHill').value.trim() || null,
+      emergency_brake_info: document.getElementById('rBrake').value.trim() || null,
+      attention_notes:      document.getElementById('rAttention').value.trim() || null,
+      common_mistakes:      document.getElementById('rMistakes').value.trim() || null,
+      preparation_tips:     document.getElementById('rTips').value.trim() || null,
+      vehicle_type:         document.getElementById('rVehicleType').value || 'car',
+      license_class:        document.getElementById('rLicenseClass').value || null,
+      route_category:       document.getElementById('rRouteCategory').value || 'vehicle',
+      icon_color:           document.getElementById('rIconColor').value || '#c41e3a',
+      icon_size:            document.getElementById('rIconSize').value || 'medium',
+      custom_icon_url:      document.getElementById('rCustomIconUrl').value.trim() || null,
+    };
+    try {
+      let routeId = editingRouteId;
+      if (routeId) {
+        await API.updateRoute(routeId, formData);
+      } else {
+        const r = await API.createRoute(formData);
+        routeId = r.id;
+      }
+      if (routeMapPoints.length > 0) {
+        const points = routeMapPoints.map((p,i) => ({
+          id:           p.id,
+          step_order:   i,
+          title:        p.title,
+          description:  p.description  || null,
+          warning_text: p.warning_text || null,
+          lat:          p.lat,
+          lng:          p.lng,
+          point_type:   p.type
+        }));
+        await API.upsertRoutePoints(routeId, points);
+      }
+      showToast('Güzergah kaydedildi!');
+      closeModal('mRoute');
+      loadRoutes();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+
+  async function toggleRoute(id, isActive) {
+    try {
+      await API.updateRoute(id, { is_active: !isActive });
+      showToast(isActive ? 'Güzergah pasife alındı.' : 'Güzergah aktifleştirildi.');
+      loadRoutes();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+
+  async function loadRouteProgressTable() {
+    const tbody = document.querySelector('#route-progress-table tbody');
+    const routeFilter = document.getElementById('progressRouteFilter').value;
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    try {
+      const data = await API.getAllRouteProgress();
+      const filtered = routeFilter ? data.filter(x => x.route_id === routeFilter) : data;
+      tbody.innerHTML = filtered.map(x => {
+        const total = x.total_points || 0;
+        const done  = x.completed_points || 0;
+        const pct   = total > 0 ? Math.round(done / total * 100) : 0;
+        const complete = total > 0 && done >= total;
+        return `<tr>
+          <td><strong>${x.student?.first_name||''} ${x.student?.last_name||''}</strong></td>
+          <td class="tc-full">${maskTc(x.student?.tc_no||'')}</td>
+          <td>${x.teacher ? x.teacher.first_name+' '+x.teacher.last_name : '-'}</td>
+          <td>${x.route_name||'-'}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;height:6px;background:#e0e0e0;border-radius:3px">
+                <div style="width:${pct}%;height:100%;background:${pct===100?'#1a7a3f':'#c41e3a'};border-radius:3px"></div>
+              </div>
+              <span style="font-size:12px;font-weight:700;color:#555">${done}/${total}</span>
+            </div>
+          </td>
+          <td>${complete?'<span class="badge badge-green">✓ Tamamlandı</span>':'<span class="badge badge-orange">Devam Ediyor</span>'}</td>
+          <td>${fmtDate(x.assigned_at)}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="7" class="text-center text-muted py-4">Güzergah ataması bulunamadı.</td></tr>';
+    } catch(e) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${e.message}</td></tr>`; }
+  }
+
+  async function loadProgressRouteFilter() {
+    const sel = document.getElementById('progressRouteFilter');
+    if (sel.dataset.loaded) return;
+    sel.dataset.loaded = '1';
+    try {
+      const routes = await API.getRoutes({ includeInactive: true });
+      sel.innerHTML = '<option value="">Tüm Güzergahlar</option>' +
+        routes.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    } catch(e) { /* ignore */ }
   }
 </script>
 </body>
