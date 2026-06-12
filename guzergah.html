@@ -425,9 +425,9 @@ function updateStepCard(idx) {
   const wEl = document.getElementById('scWarn');
   const dEl = document.getElementById('scDesc');
   wEl.textContent = p.warning_text ? '⚠️ ' + p.warning_text : '';
-  wEl.style.display = p.warning_text ? '' : 'none';
+  wEl.style.display = p.warning_text ? 'block' : 'none';
   dEl.textContent = p.description || '';
-  dEl.style.display = p.description ? '' : 'none';
+  dEl.style.display = p.description ? 'block' : 'none';
   // Listedeki aktif stili güncelle
   document.querySelectorAll('.step-item').forEach(el => el.classList.remove('active'));
   const el = document.getElementById(`si-${p.id}`);
@@ -460,9 +460,9 @@ function showPointPopup(p, idx) {
   const wEl = document.getElementById('ppWarn');
   const dEl = document.getElementById('ppDesc');
   wEl.textContent  = p.warning_text ? '⚠️ ' + p.warning_text : '';
-  wEl.style.display = p.warning_text ? '' : 'none';
+  wEl.style.display = p.warning_text ? 'block' : 'none';
   dEl.textContent  = p.description || '';
-  dEl.style.display = p.description ? '' : 'none';
+  dEl.style.display = p.description ? 'block' : 'none';
 
   // Her zaman göster (içerik yoksa sadece başlık görünür)
   clearTimeout(_popupTimer);
