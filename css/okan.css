@@ -1,4 +1,25 @@
 /* ===== OKAN SÜRÜCÜ KURSLARI - ANA STİL ===== */
+
+/* ── Yatay mod engeli ── */
+@media (orientation: landscape) {
+  body::after {
+    content: '📱 Lütfen cihazınızı\A dikey konuma getirin';
+    white-space: pre;
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    z-index: 999999;
+  }
+}
 :root {
   --red:       #c41e3a;
   --red-dark:  #8b0000;
