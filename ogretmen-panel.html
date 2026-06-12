@@ -21,12 +21,16 @@
 </head>
 <body>
 <nav class="okan-nav">
-  <a href="#" class="brand"><i class="fas fa-steering-wheel"></i> OKAN SÜRÜCÜ KURSLARI</a>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button class="btn-hamburger" onclick="toggleSidebar()" aria-label="Menü"><i class="fas fa-bars"></i></button>
+    <a href="#" class="brand"><i class="fas fa-car"></i> OKAN SÜRÜCÜ KURSLARI</a>
+  </div>
   <div class="nav-right">
     <div class="user-badge"><i class="fas fa-chalkboard-teacher"></i> <span id="navName">Öğretmen</span></div>
     <a href="#" class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Çıkış</a>
   </div>
 </nav>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
 
 <div class="app-layout">
   <div class="sidebar">
@@ -81,11 +85,46 @@
       <div class="okan-card" style="max-width:500px">
         <div class="card-body">
           <div id="addStuAlert"></div>
+
+          <div style="background:#fff0f2;border:2px solid #f5c6cb;border-radius:10px;padding:14px;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:700;color:#c41e3a;margin-bottom:10px"><i class="fas fa-calendar-alt me-1"></i>Kayıt Dönemi *</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div>
+                <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Yıl</label>
+                <select class="form-control" id="sYear" style="font-size:13px"></select>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Ay</label>
+                <select class="form-control" id="sMonth" style="font-size:13px">
+                  <option value="1">Ocak</option><option value="2">Şubat</option>
+                  <option value="3">Mart</option><option value="4">Nisan</option>
+                  <option value="5">Mayıs</option><option value="6">Haziran</option>
+                  <option value="7">Temmuz</option><option value="8">Ağustos</option>
+                  <option value="9">Eylül</option><option value="10">Ekim</option>
+                  <option value="11">Kasım</option><option value="12">Aralık</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Dönem</label>
+                <select class="form-control" id="sPeriod" style="font-size:13px">
+                  <option value="1">1. Dönem</option>
+                  <option value="2">2. Dönem</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div class="form-group"><label>Ad *</label><input type="text" class="form-control" id="sFn" placeholder="Adı"></div>
           <div class="form-group"><label>Soyad *</label><input type="text" class="form-control" id="sLn" placeholder="Soyadı"></div>
           <div class="form-group"><label>TC Kimlik No *</label><input type="tel" class="form-control" id="sTc" maxlength="11" placeholder="11 haneli TC no"></div>
           <div class="form-group"><label>Telefon</label><input type="tel" class="form-control" id="sPh" placeholder="05XX XXX XX XX"></div>
           <div class="form-group"><label>Not</label><textarea class="form-control" id="sNt" rows="2" placeholder="İsteğe bağlı not"></textarea></div>
+          <div class="form-group">
+            <label>Sınav Güzergahı <span style="color:#888;font-size:12px">(isteğe bağlı)</span></label>
+            <select class="form-control" id="sRoute">
+              <option value="">— Güzergah seç —</option>
+            </select>
+          </div>
           <div style="display:flex;gap:10px">
             <button class="btn-red" onclick="addStudent()"><i class="fas fa-plus me-1"></i>Kaydet</button>
             <button class="btn-outline-red" onclick="clearAddForm()">Temizle</button>
@@ -164,10 +203,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/.netlify/functions/config"></script>
-<script src="js/supabase-client.js"></script>
-<script src="js/api.js"></script>
+<script src="js/okan-api.js"></script>
 <script>
-  initSupabase();
   let myTeacherId = null;
   let myStudents  = [];
 
@@ -180,16 +217,31 @@
     document.getElementById('navName').textContent = teacher.first_name + ' ' + teacher.last_name;
 
     populateMonths('primMonth');
+    initYearSelect();
+    loadRouteSelect();
     await loadDashboard();
   });
 
   async function doLogout() { await API.logout(); location.href = 'index.html'; }
+
+  function toggleSidebar() {
+    const s = document.querySelector('.sidebar');
+    const b = document.getElementById('sidebarBackdrop');
+    const opening = !s.classList.contains('open');
+    s.classList.toggle('open', opening);
+    b.classList.toggle('open', opening);
+  }
+  function closeSidebar() {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebarBackdrop').classList.remove('open');
+  }
 
   function sp(name, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-'+name).classList.add('active');
     document.querySelectorAll('.sidebar .nav-item').forEach(n => n.classList.remove('active'));
     if (el) el.classList.add('active');
+    closeSidebar();
     if (name === 'kursiyerler') loadStudents();
     if (name === 'sinav')       loadStuSelect();
     if (name === 'anketler')    loadSurveys();
@@ -273,24 +325,76 @@
       students.map(s => `<option value="${s.id}">${s.first_name} ${s.last_name} (${maskTc(s.tc_no)})</option>`).join('');
   }
 
+  // Yıl dropdown'ını doldur
+  function initYearSelect() {
+    const sel = document.getElementById('sYear');
+    if (!sel) return;
+    const now = new Date().getFullYear();
+    for (let y = now + 1; y >= now - 2; y--) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === now) o.selected = true;
+      sel.appendChild(o);
+    }
+    // Ay ve dönemi de şu ana ayarla
+    document.getElementById('sMonth').value  = String(new Date().getMonth() + 1);
+    document.getElementById('sPeriod').value = '1';
+  }
+
+  async function loadRouteSelect() {
+    const sel = document.getElementById('sRoute');
+    if (!sel || sel.dataset.loaded) return;
+    sel.dataset.loaded = '1';
+    try {
+      const routes = await API.getRoutes({ includeInactive: false });
+      const vtLabels = { car:'Otomobil', motorcycle:'Motosiklet', truck:'Kamyon', bus:'Otobüs', minibus:'Minibüs', tractor:'Traktör', bicycle:'Bisiklet', custom:'Özel' };
+      const vtEmojis = { car:'🚗', motorcycle:'🏍️', truck:'🚛', bus:'🚌', minibus:'🚐', tractor:'🚜', bicycle:'🚲', custom:'⭐' };
+      sel.innerHTML = '<option value="">— Güzergah seç —</option>' +
+        routes.map(r => {
+          const vt  = r.vehicle_type || 'car';
+          const em  = vtEmojis[vt] || '🚗';
+          const lbl = vtLabels[vt] || vt;
+          const lc  = r.license_class ? ` • ${r.license_class}` : '';
+          const reg = r.region ? ` (${r.region})` : '';
+          return `<option value="${r.id}">${em} ${r.name}${reg} — ${lbl}${lc}</option>`;
+        }).join('');
+    } catch(e) { /* ignore route load error */ }
+  }
+
   async function addStudent() {
-    const fn = document.getElementById('sFn').value.trim();
-    const ln = document.getElementById('sLn').value.trim();
-    const tc = document.getElementById('sTc').value.trim();
-    const ph = document.getElementById('sPh').value.trim();
-    const nt = document.getElementById('sNt').value.trim();
+    const fn     = document.getElementById('sFn').value.trim();
+    const ln     = document.getElementById('sLn').value.trim();
+    const tc     = document.getElementById('sTc').value.trim();
+    const ph     = document.getElementById('sPh').value.trim();
+    const nt     = document.getElementById('sNt').value.trim();
+    const yr     = parseInt(document.getElementById('sYear').value);
+    const mo     = parseInt(document.getElementById('sMonth').value);
+    const per    = parseInt(document.getElementById('sPeriod').value);
+    const routeId = document.getElementById('sRoute').value;
+
     if (!fn || !ln || !tc) return showAlert('addStuAlert','Ad, soyad ve TC zorunludur.','error');
     if (tc.length !== 11 || !/^\d+$/.test(tc)) return showAlert('addStuAlert','TC kimlik no 11 haneli rakam olmalıdır.','error');
+    if (!yr || !mo || !per) return showAlert('addStuAlert','Kayıt dönemi seçilmelidir.','error');
     try {
-      await API.createStudent({ teacher_id: myTeacherId, first_name:fn, last_name:ln, tc_no:tc, phone:ph||null, notes:nt||null });
+      const student = await API.createStudent({
+        teacher_id: myTeacherId,
+        first_name: fn, last_name: ln, tc_no: tc,
+        phone: ph || null, notes: nt || null,
+        record_year: yr, record_month: mo, record_period: per
+      });
+      if (routeId && student?.id) {
+        await API.assignRoute(student.id, routeId, myTeacherId);
+      }
       showAlert('addStuAlert','Kursiyer başarıyla eklendi!','success');
       clearAddForm(); myStudents = [];
-    } catch(e) { showAlert('addStuAlert', e.message,'error'); }
+    } catch(e) { showAlert('addStuAlert', e.message, 'error'); }
   }
 
   function clearAddForm() {
-    ['sFn','sLn','sTc','sPh','sNt'].forEach(id => document.getElementById(id).value='');
-    document.getElementById('addStuAlert').innerHTML='';
+    ['sFn','sLn','sTc','sPh','sNt'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('sRoute').value = '';
+    document.getElementById('addStuAlert').innerHTML = '';
+    initYearSelect();
   }
 
   async function addExam() {
@@ -365,10 +469,10 @@
           ${s.notes?`<br><strong>Not:</strong> ${s.notes}`:''}
         </div>
         <h6 style="font-weight:700;margin-bottom:8px">Sınav Geçmişi</h6>
-        ${exams.length?`<table class="okan-table" style="font-size:13px">
+        ${exams.length?`<div style="overflow-x:auto"><table class="okan-table" style="font-size:13px;min-width:340px">
           <thead><tr><th>Tarih</th><th>Tür</th><th>Puan</th><th>Sonuç</th></tr></thead>
           <tbody>${exams.map(e=>`<tr><td>${fmtDate(e.exam_date)}</td><td>${e.exam_type||'-'}</td><td>${e.score!=null?e.score:'-'}</td><td>${examBadge(e.result)}</td></tr>`).join('')}</tbody>
-        </table>`:'<p class="text-muted" style="font-size:13px">Sınav kaydı yok.</p>'}`;
+        </table></div>`:'<p class="text-muted" style="font-size:13px">Sınav kaydı yok.</p>'}`;
     } catch(e) { document.getElementById('mStuBody').innerHTML = `<p class="text-danger">${e.message}</p>`; }
   }
 
