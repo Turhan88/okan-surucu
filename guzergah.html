@@ -615,6 +615,17 @@ class RouteSimulator {
     }
   }
 
+  // Haritayı araç üzerine kilitle — yatayda tam orta, dikeyde üstten %35
+  _followCar(lat, lng) {
+    const zoom    = this.map.getZoom();
+    const mapSize = this.map.getSize();
+    // Araç üstten %35'te görünsün: merkezi araçtan %15 (mapSize.y*0.15) aşağıya kaydır
+    const offsetY  = mapSize.y * 0.15;
+    const carPx    = this.map.project([lat, lng], zoom);
+    const center   = this.map.unproject(L.point(carPx.x, carPx.y + offsetY), zoom);
+    this.map.panTo(center, { animate: false, noMoveStart: true });
+  }
+
   _tick() {
     if (this.state !== 'running') return;
     const now = performance.now();
@@ -632,6 +643,7 @@ class RouteSimulator {
         // Son noktaya ulaşıldı
         const last = this.points[this.points.length - 1];
         this.marker.setLatLng([last.lat, last.lng]);
+        this._followCar(last.lat, last.lng);
         this.state = 'done';
         this._onPoint(this.points.length - 1);
         document.getElementById('simLabel').textContent = '🏁 Güzergah tamamlandı! Tebrikler!';
@@ -639,9 +651,10 @@ class RouteSimulator {
         return;
       }
 
-      // Ara noktaya ulaşıldı — 3.5sn bekle
+      // Ara noktaya ulaşıldı
       const pt = this.points[this.segIdx];
       this.marker.setLatLng([pt.lat, pt.lng]);
+      this._followCar(pt.lat, pt.lng);
       this.state = 'paused';
       _simButtons('paused');
       this._onPoint(this.segIdx);
@@ -660,6 +673,7 @@ class RouteSimulator {
     const lat  = from.lat + (to.lat - from.lat) * this.segT;
     const lng  = from.lng + (to.lng - from.lng) * this.segT;
     this.marker.setLatLng([lat, lng]);
+    this._followCar(lat, lng);
 
     // Araç yönünü döndür
     const bearing = this._bearing(from, to);
