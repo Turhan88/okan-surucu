@@ -702,6 +702,12 @@ function simStart() {
       customIconUrl: r.custom_icon_url || null,
     });
   }
+  // Başlata basılınca ilk noktaya 5 zoom yakınlaş
+  const p0 = routeData?.points?.[0];
+  if (p0 && routeMap) {
+    const targetZoom = Math.min(routeMap.getZoom() + 5, 18);
+    routeMap.flyTo([p0.lat, p0.lng], targetZoom, { animate: true, duration: 1.5 });
+  }
   simulator?.start();
   _simButtons('running');
 }
